@@ -1,25 +1,27 @@
 /*==================== SHOW MENU ====================*/
-const showMenu = (toggleId, navId) =>{
+const showMenu = (toggleId, navMobileId) =>{
     const toggle = document.getElementById(toggleId),
-    nav = document.getElementById(navId)
+    navMobile = document.getElementById(navMobileId)
     
     // Validate that variables exist
-    if(toggle && nav){
+    if(toggle && navMobile){
         toggle.addEventListener('click', ()=>{
-            // We add the show-menu class to the div tag with the nav__menu class
-            nav.classList.toggle('show-menu')
+            // Toggle the show-menu class on mobile menu
+            navMobile.classList.toggle('show-menu')
         })
     }
 }
-showMenu('nav-toggle','nav-menu')
+showMenu('nav-toggle','nav-menu-mobile')
 
 /*==================== REMOVE MENU MOBILE ====================*/
 const navLink = document.querySelectorAll('.nav__link')
 
 function linkAction(){
-    const navMenu = document.getElementById('nav-menu')
+    const navMenuMobile = document.getElementById('nav-menu-mobile')
     // When we click on each nav__link, we remove the show-menu class
-    navMenu.classList.remove('show-menu')
+    if(navMenuMobile){
+        navMenuMobile.classList.remove('show-menu')
+    }
 }
 navLink.forEach(n => n.addEventListener('click', linkAction))
 
@@ -35,9 +37,11 @@ function scrollActive(){
         sectionId = current.getAttribute('id')
 
         if(scrollY > sectionTop && scrollY <= sectionTop + sectionHeight){
-            document.querySelector('.nav__menu a[href*=' + sectionId + ']').classList.add('active-link')
+            const links = document.querySelectorAll('.nav__menu a[href*=' + sectionId + ']')
+            links.forEach(link => link.classList.add('active-link'))
         }else{
-            document.querySelector('.nav__menu a[href*=' + sectionId + ']').classList.remove('active-link')
+            const links = document.querySelectorAll('.nav__menu a[href*=' + sectionId + ']')
+            links.forEach(link => link.classList.remove('active-link'))
         }
     })
 }
@@ -61,9 +65,10 @@ window.addEventListener('scroll', scrollTop)
 
 /*==================== DARK LIGHT THEME ====================*/ 
 const themeButton = document.getElementById('theme-button')
+const themeButtonMobile = document.getElementById('theme-button-mobile')
 const darkTheme = 'dark-theme'
 const iconTheme = 'bx-sun'
-const themeLogo = document.getElementById('theme-logo')
+const headerLogo = document.getElementById('header-logo')
 
 // Previously selected topic (if user selected)
 const selectedTheme = localStorage.getItem('selected-theme')
@@ -74,12 +79,22 @@ const getCurrentTheme = () => document.body.classList.contains(darkTheme) ? 'dar
 const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx-moon' : 'bx-sun'
 
 // Function to update logo based on theme
-const updateLogo = () => {
+const updateHeaderLogo = () => {
     if (document.body.classList.contains(darkTheme)) {
-        themeLogo.src = 'assets/img/bear-trap.png'
+        headerLogo.src = 'assets/img/bear-trap-header-dark.svg'
     } else {
-        themeLogo.src = 'assets/img/bear-trap-light.svg'
+        headerLogo.src = 'assets/img/bear-trap-header-light.svg'
     }
+}
+
+// Function to toggle theme
+const toggleTheme = () => {
+    document.body.classList.toggle(darkTheme)
+    themeButton.classList.toggle(iconTheme)
+    if(themeButtonMobile) themeButtonMobile.classList.toggle(iconTheme)
+    localStorage.setItem('selected-theme', getCurrentTheme())
+    localStorage.setItem('selected-icon', getCurrentIcon())
+    updateHeaderLogo()
 }
 
 // We validate if the user previously chose a topic
@@ -87,20 +102,17 @@ if (selectedTheme) {
   // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
   document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](darkTheme)
   themeButton.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
-  updateLogo()
+  if(themeButtonMobile) themeButtonMobile.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
+  updateHeaderLogo()
 }
 
-// Activate / deactivate the theme manually with the button
-themeButton.addEventListener('click', () => {
-    // Add or remove the dark / icon theme
-    document.body.classList.toggle(darkTheme)
-    themeButton.classList.toggle(iconTheme)
-    // We save the theme and the current icon that the user chose
-    localStorage.setItem('selected-theme', getCurrentTheme())
-    localStorage.setItem('selected-icon', getCurrentIcon())
-    // Update logo
-    updateLogo()
-})
+// Activate / deactivate the theme manually with the button (desktop)
+themeButton.addEventListener('click', toggleTheme)
+
+// Activate / deactivate the theme manually with the button (mobile)
+if(themeButtonMobile){
+    themeButtonMobile.addEventListener('click', toggleTheme)
+}
 
 /*==================== SCROLL REVEAL ANIMATION ====================*/
 const sr = ScrollReveal({
