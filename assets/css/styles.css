@@ -1,21 +1,24 @@
 /*===== GOOGLE FONTS =====*/
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap');
 
 /*===== VARIABLES CSS =====*/
 :root {
   --header-height: 3rem;
 
-  /*========== Colors ==========*/
-  --first-color: #069C54;
-  --first-color-alt: #048654;
-  --title-color: #393939;
-  --text-color: #707070;
-  --text-color-light: #A6A6A6;
-  --body-color: #FBFEFD;
-  --container-color: #FFFFFF;
+  /*========== Bear Trap Light Theme Colors ==========*/
+  --first-color: #333; /* Dark accent for light theme */
+  --first-color-alt: #555; /* Lighter accent */
+  --title-color: #000; /* Black titles */
+  --text-color: #333; /* Dark gray text */
+  --text-color-light: #666; /* Medium gray */
+  --body-color: #fff; /* White background */
+  --container-color: #f5f5f5; /* Light gray container */
 
   /*========== Font and typography ==========*/
-  --body-font: 'Poppins', sans-serif;
+  --body-font: 'Merriweather', serif;
+  --nav-font: 'Inter', 'Poppins', Arial, sans-serif;
   --biggest-font-size: 2.25rem;
   --h1-font-size: 1.5rem;
   --h2-font-size: 1.25rem;
@@ -64,20 +67,29 @@ html{
 
 /*========== Variables Dark theme ==========*/
 body.dark-theme{
-  --title-color: #F1F3F2;
-  --text-color: #C7D1CC;
-  --body-color: #1D2521;
-  --container-color: #27302C;
+  --first-color: #ddd; /* Light accent for dark theme */
+  --first-color-alt: #fff; /* White accent */
+  --title-color: #fff; /* White titles */
+  --text-color: #e0e0e0; /* Light gray text */
+  --text-color-light: #bdbdbd; /* Lighter gray */
+  --body-color: #000; /* Black background */
+  --container-color: #181818; /* Dark container */
 }
 
 /*========== Button Dark/Light ==========*/
 .change-theme{
   position: absolute;
-  right: 1rem;
-  top: 1.8rem;
+  right: 2rem;
   color: var(--text-color);
-  font-size: 1rem;
+  font-size: 1.5rem;
   cursor: pointer;
+  transition: all .3s ease;
+  z-index: var(--z-fixed);
+}
+
+.change-theme:hover{
+  transform: rotate(20deg) scale(1.1);
+  color: var(--title-color);
 }
 
 body{
@@ -124,7 +136,7 @@ img{
 
 .section-subtitle{
   display: block;
-  color: var(--first-color);
+  color: var(--title-color);
   font-weight: var(--font-medium);
   margin-bottom: var(--mb-1);
 }
@@ -182,19 +194,58 @@ img{
 
 .nav__link, .nav__logo, .nav__toggle{
   color: var(--text-color);
-  font-weight: var(--font-medium);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 1.08rem;
+  font-family: var(--nav-font);
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.nav__logo{
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--title-color);
+  font-family: var(--nav-font);
 }
 
 .nav__logo:hover{
-  color: var(--first-color);
+  color: var(--title-color);
+  opacity: 0.8;
 }
 
 .nav__link{
-  transition: .3s;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  text-transform: capitalize;
+  font-size: 1.08rem;
+  padding: 0.25em 0.7em;
+  border-radius: 0.5em;
+  font-family: var(--nav-font);
+  font-weight: 600;
+}
+
+.nav__link::after{
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -5px;
+  left: 50%;
+  background-color: var(--title-color);
+  transition: all .3s ease;
+  transform: translateX(-50%);
 }
 
 .nav__link:hover{
-  color: var(--first-color);
+  color: var(--first-color-alt);
+  background: rgba(0,0,0,0.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.nav__link:hover::after{
+  width: 80%;
 }
 
 .nav__toggle{
@@ -209,7 +260,12 @@ img{
 
 /* Active menu */
 .active-link{
-  color: var(--first-color);
+  color: var(--title-color);
+  font-weight: 600;
+}
+
+.active-link::after{
+  width: 80%;
 }
 
 /* Change background header */
@@ -226,15 +282,17 @@ img{
   justify-content: center;
   align-items: center;
   padding: .3rem;
-  background: rgba(6,156,84,.5);
+  background: var(--title-color);
   border-radius: .4rem;
   z-index: var(--z-tooltip);
   transition: .4s;
   visibility: hidden;
+  opacity: 0.7;
 }
 
 .scrolltop:hover{
-  background-color: var(--first-color-alt);
+  opacity: 1;
+  transform: translateY(-3px);
 }
 
 .scrolltop__icon{
@@ -256,7 +314,7 @@ img{
 
 .home__title{
   font-size: var(--biggest-font-size);
-  color: var(--first-color);
+  color: var(--title-color);
   margin-bottom: var(--mb-1);
 }
 
@@ -274,15 +332,25 @@ img{
 /*========== BUTTONS ==========*/
 .button{
   display: inline-block;
-  background-color: var(--first-color);
-  color: #FFF;
-  padding: .75rem 1rem;
+  background-color: transparent;
+  color: var(--title-color);
+  padding: .75rem 1.5rem;
+  border: 2px solid var(--title-color);
   border-radius: .5rem;
-  transition: .3s;
+  transition: all .3s ease;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .button:hover{
-  background-color: var(--first-color-alt);
+  background-color: var(--title-color);
+  color: var(--body-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-theme .button:hover{
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 
 /*========== ABOUT ==========*/
@@ -313,7 +381,7 @@ img{
 .services__img{
   width: 64px;
   height: 64px;
-  fill: var(--first-color);
+  fill: var(--title-color);
   margin-bottom: var(--mb-2);
 }
 
@@ -409,13 +477,19 @@ img{
 
 /*========== FOOTER ==========*/
 .footer__container{
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   row-gap: 2rem;
+  column-gap: 2rem;
+  max-width: 1200px;
+}
+
+.footer__content:last-child {
+  min-width: 250px;
 }
 
 .footer__logo{
   font-size: var(--h3-font-size);
-  color: var(--first-color);
+  color: var(--title-color);
   font-weight: var(--font-semi-bold);
 }
 
@@ -444,7 +518,7 @@ img{
 }
 
 .footer__link:hover{
-  color: var(--first-color);
+  color: var(--title-color);
 }
 
 .footer__copy{
@@ -507,8 +581,7 @@ img{
   }
 
   .change-theme{
-    position: initial;
-    margin-left: var(--mb-2);
+    right: 3rem;
   }
 
   .home__container{
