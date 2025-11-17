@@ -87,6 +87,18 @@ const updateHeaderLogo = () => {
     }
 }
 
+// Function to update footer logo based on theme
+const updateFooterLogo = () => {
+    const footerLogo = document.querySelector('.footer__logo-img')
+    if (footerLogo) {
+        if (document.body.classList.contains(darkTheme)) {
+            footerLogo.src = 'assets/img/bear-trap-footer-dark.svg'
+        } else {
+            footerLogo.src = 'assets/img/bear-trap-footer-light.svg'
+        }
+    }
+}
+
 // Function to toggle theme
 const toggleTheme = () => {
     document.body.classList.toggle(darkTheme)
@@ -95,6 +107,7 @@ const toggleTheme = () => {
     localStorage.setItem('selected-theme', getCurrentTheme())
     localStorage.setItem('selected-icon', getCurrentIcon())
     updateHeaderLogo()
+    updateFooterLogo()
 }
 
 // We validate if the user previously chose a topic
@@ -104,6 +117,7 @@ if (selectedTheme) {
   themeButton.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
   if(themeButtonMobile) themeButtonMobile.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
   updateHeaderLogo()
+  updateFooterLogo()
 }
 
 // Activate / deactivate the theme manually with the button (desktop)
