@@ -2,6 +2,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap');
 
 /*===== VARIABLES CSS =====*/
 :root {
@@ -42,6 +43,9 @@
   /*========== z index ==========*/
   --z-tooltip: 10;
   --z-fixed: 100;
+  /* Logo glow vars (used for subtle hover glow, theme-aware) */
+  --logo-glow: 0 12px 30px rgba(0,0,0,0.08);
+  --logo-accent-glow: rgba(0,0,0,0.06);
 }
 
 @media screen and (min-width: 768px){
@@ -74,6 +78,8 @@ body.dark-theme{
   --text-color-light: #bdbdbd; /* Lighter gray */
   --body-color: #000; /* Black background */
   --container-color: #181818; /* Dark container */
+  --logo-glow: 0 12px 32px rgba(255,255,255,0.06);
+  --logo-accent-glow: rgba(255,255,255,0.045);
 }
 
 /*========== Button Dark/Light ==========*/
@@ -161,6 +167,8 @@ img{
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .modern-container::before {
@@ -194,10 +202,11 @@ img{
 
 /*========== LAYOUT ==========*/
 .bd-container{
-  max-width: 100vw;
-  width: calc(100% - 2rem);
-  margin-left: var(--mb-2);
-  margin-right: var(--mb-2);
+  /* Wider, fluid page container to give components (like menu and modern-container) more horizontal room */
+  max-width: 1400px;
+  width: calc(100% - 4rem);
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .bd-grid{
@@ -245,6 +254,28 @@ img{
   height: 70px;
   width: auto;
   display: block;
+  transition: transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease, filter .45s ease;
+  will-change: transform, box-shadow;
+}
+
+/* Subtle, softer hover/focus for header logo: smaller lift & scale with eased timing */
+.nav__logo-center img:hover,
+.nav__logo-center img:focus-visible{
+  transform: translateY(-1px) scale(1.015);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06), 0 0 12px rgba(0,0,0,0.03);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.04));
+  animation: none;
+}
+
+@keyframes logo-pulse {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.01); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Gentle pulse on focus (accessibility) */
+.nav__logo-center img:focus-visible{
+  animation: logo-pulse 0.9s ease-in-out 1;
 }
 
 /* Menu containers are transparent on the grid by default; lists control visibility */
@@ -785,6 +816,485 @@ img{
   }
 }
 
+/* ==================================================
+   Menu integration styles (from assets/bearmenu)
+   Kept mostly as provided; scoped to menu page via
+   using unique class names (menu-container, grid-* etc.)
+   ==================================================*/
+
+.menu-container {
+  /* Mobile-first: full width on small screens, but allow wider max width on larger viewports */
+  width: 100%;
+  max-width: min(1280px, 96%);
+  margin: 0 auto;
+  padding: 22px 18px;
+  box-sizing: border-box;
+  transition: none !important; /* keep hover disabled */
+  /* Small tunable offset to nudge the first line of menu item titles down so
+     they visually align with the right-anchored price. Change this value if
+     you want titles moved more/less. Scoped here so it only affects the menu. */
+  /* Increased nudge so first-line titles sit lower and align with prices */
+  --menu-title-nudge: 0.32rem;
+}
+
+/* Disable any hover-based lift/animation inside the menu panel to keep it visually stable */
+.menu-container:hover,
+.menu-container *:hover {
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Explicitly prevent box-shadow/translate on focus/hover for any nested modern-container if present */
+.menu-container .modern-container,
+.menu-container .modern-container:hover,
+.menu-container .modern-container:focus {
+  transform: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+}
+
+/* --- LOGO SETTINGS --- */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.menu-logo {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* --- SECTION HEADERS ("APPETIZERS", etc.) --- */
+.section-header {
+  text-align: center;
+  margin: 35px 0 5px 0;
+}
+.section-header h3 {
+  font-family: 'Oswald', sans-serif;
+  /* menu titles set to white for high contrast on dark menu panel */
+  color: #ffffff;
+  font-size: 2.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  /* identical white lines above and below the title */
+  border-top: 3px solid #ffffff;
+  border-bottom: 3px solid #ffffff;
+  display: inline-block;
+  margin: 0;
+  /* small vertical padding to give the lines breathing room */
+  padding: 6px 8px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.section-note {
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  /* lighter grey to keep descriptions readable but de-emphasized */
+  color: rgba(255,255,255,0.65);
+  margin-top: 8px;
+  margin-bottom: 25px;
+  padding: 0 10px;
+}
+
+/* --- MENU ITEMS --- */
+.menu-item {
+  margin: 0; /* gap handled by parent column gap */
+  text-align: center;
+  padding: 6px 0; /* consistent vertical rhythm */
+}
+    
+/* The top line: NAME ... PRICE */
+.item-top {
+  display: flex;
+  justify-content: center; 
+  align-items: baseline;
+  width: 100%;
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.05rem;
+  /* item names and prices should be white for contrast */
+  color: #ffffff;
+  gap: 8px; /* consistent spacing between name/dots/price */
+  min-height: 34px; /* stabilizes row height across items */
+}
+
+.item-name {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+    
+/* The 3 Dots */
+.item-dots {
+  margin: 0 4px;
+  font-weight: 700;
+}
+.item-dots::after {
+  content: "..."; 
+}
+
+.item-price {
+  font-weight: 700;
+}
+
+/* The Description: Classic Serif Italic */
+.item-desc {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 0.95rem;
+  font-style: italic;
+  /* description text slightly lighter than item names */
+  color: rgba(255,255,255,0.62);
+  margin-top: 1px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- LAYOUT GRIDS --- */
+/* Mobile-first: stack columns on small screens */
+.grid-3-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+    
+.grid-2-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 30px;
+}
+
+.col-content {
+  /* Mobile-first: smaller horizontal padding so items don't wrap unnecessarily */
+  padding: 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* consistent vertical spacing between menu items */
+  align-items: stretch;
+}
+
+/* Vertical Divider Lines (Desktop Only) */
+@media (min-width: 769px) {
+  /* Disable hover/transform of the surrounding outline when on the menu page.
+     This prevents the menu's outer card (.menu-page__content) from lifting. */
+  .menu-page__container .menu-page__content,
+  .menu-page__container .menu-page__content:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
+  }
+  .grid-3-col > div:nth-child(1), 
+  .grid-3-col > div:nth-child(2) {
+    border-right: 1px solid rgba(255,255,255,0.22); /* stronger white divider */
+    padding-right: 18px; /* create breathing room from the divider */
+  }
+  .grid-2-col > div:nth-child(1) {
+    border-right: 1px solid rgba(255,255,255,0.22); /* stronger white divider */
+    padding-right: 18px;
+  }
+}
+
+/* --- PIZZA SECTION --- */
+.pizza-grid {
+  display: flex;
+  justify-content: space-between;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 30px;
+}
+.pizza-col {
+  flex: 1;
+  text-align: center;
+  border-right: 1px solid #888;
+  padding: 0 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.pizza-col:last-child { border-right: none; }
+    
+.pizza-title { 
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700; 
+  text-transform: uppercase; 
+  display: block; 
+  font-size: 1rem;
+  color: #ffffff;
+}
+.pizza-desc { 
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic; 
+  font-size: 0.9rem; 
+  color: rgba(255,255,255,0.62);
+}
+
+/* --- SPECIALS LIST --- */
+.specials-list {
+  text-align: center;
+  list-style: none;
+  padding: 0;
+}
+.specials-list li {
+  margin-bottom: 10px;
+  font-family: 'Oswald', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+/* --- EXTRAS & WARNINGS --- */
+.extra-sauces {
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic;
+  font-size: 0.9rem;
+  margin-top: 20px;
+  color: rgba(255,255,255,0.62);
+}
+
+.warning-box {
+  border: 1px solid #aaa;
+  padding: 8px;
+  text-align: center;
+  font-family: "Times New Roman", Times, serif;
+  font-style: italic;
+  font-size: 0.85rem;
+  margin: 40px auto;
+  max-width: 800px;
+  color: #555;
+}
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+  .grid-3-col, .grid-2-col, .pizza-grid {
+    display: flex;
+    flex-direction: column;
+  }
+  .grid-3-col > div, .grid-2-col > div, .pizza-col {
+    border-right: none !important; 
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+  .item-desc { padding: 0 10px; }
+}
+
+/* Desktop: adjust menu columns so item titles are centered above the details */
+@media (min-width: 769px) {
+  /* Restore three-column grid on desktop while keeping mobile-first base above */
+  .grid-3-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    column-gap: 44px; /* match print spacing */
+    row-gap: 8px;
+    align-items: start;
+  }
+  .grid-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 44px;
+  }
+
+  /* Column padding and vertical rhythm for printed-menu look */
+  .col-content {
+    gap: 14px;
+    padding: 0 18px; /* room between column edge and content */
+  }
+
+  /* Each menu item: center the title horizontally, keep description centered, and anchor price to the right */
+  .menu-item {
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  .item-top {
+    display: flex;
+    justify-content: center; /* center the name */
+    align-items: baseline;
+    gap: 12px;
+    min-height: 44px; /* slightly taller to accommodate two-line names */
+    position: relative; /* allow absolute positioning of price */
+  }
+
+  .item-name {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center; /* center the title above details */
+    display: block;
+    /* Nudge first (top) line slightly down so it visually lines up with the
+       right-anchored price. Tuned via --menu-title-nudge on .menu-container. */
+    transform: translateY(var(--menu-title-nudge));
+    width: 100%;
+    white-space: normal; /* allow wrapping */
+    margin: 0; /* reset side margin when centered */
+  }
+
+  /* Hide dot leader when centering names */
+  .item-dots { display: none; }
+
+  .item-price {
+    font-weight: 700;
+    white-space: nowrap;
+    position: absolute;
+    right: 0;
+    /* Align price vertically with the (possibly nudged) first line of the
+       item title. We add the menu-title-nudge value so the price moves down
+       the same amount as the title when that variable is used. */
+    top: calc(0.3rem + var(--menu-title-nudge, 0rem));
+  }
+
+  /* Keep descriptions centered beneath the item as in the print menu */
+  .item-desc {
+    text-align: center;
+    padding: 0 6px;
+    margin-top: 4px;
+  }
+
+  /* Tighten description spacing for items with single-line titles only.
+     The small JS snippet adds .single-line or .two-line to each .menu-item. */
+  .menu-item.single-line .item-desc {
+    margin-top: 2px; /* tighter spacing when title is a single line */
+  }
+
+  /* For clarity, ensure two-line items keep a slightly larger gap */
+  .menu-item.two-line .item-desc {
+    margin-top: 8px;
+  }
+
+  /* Ensure vertical divider breathing room */
+  .grid-3-col > div:nth-child(1),
+  .grid-3-col > div:nth-child(2) {
+    padding-right: 22px;
+    /* reinforce divider color here as well for consistency */
+    border-right: 1px solid rgba(255,255,255,0.22);
+  }
+}
+
+/* --------------------------------------------------
+   Section-specific divider alignment
+   Move grids slightly to the right so their vertical
+   dividers align with the page center (Our Menu title).
+   These selectors target the grid immediately following a
+   `.section-header` to avoid changing HTML structure.
+   -------------------------------------------------- */
+@media (min-width: 769px) {
+  /* Two-column sections (e.g., Burger Baskets, Chicken & Seafood)
+     — shift right and keep a single middle divider only. */
+  .section-header + .grid-2-col {
+    transform: translateX(18px); /* tweak this value to nudge more/less */
+  }
+  .section-header + .grid-2-col > div:nth-child(1) {
+    border-right: 1px solid rgba(255,255,255,0.22);
+    padding-right: 18px;
+  }
+  .section-header + .grid-2-col > div:nth-child(2) {
+    border-right: none; /* remove far-right divider for two-col sections */
+  }
+
+  /* Three-column sections (e.g., Appetizers) — shift entire grid right so
+     both dividers move together and maintain their gap. */
+  .section-header + .grid-3-col {
+    transform: translateX(22px); /* slightly larger nudge for appetizers */
+  }
+  .section-header + .grid-3-col > div:nth-child(1),
+  .section-header + .grid-3-col > div:nth-child(2) {
+    border-right: 1px solid rgba(255,255,255,0.22);
+    padding-right: 18px;
+  }
+}
+
+/* ==================================================
+   Disable all hover effects & animations inside menu
+   ==================================================
+   This block intentionally uses !important to override
+   any existing hover/transition/animation rules that
+   apply to elements nested in the menu panel. It leaves
+   interactive behavior (clicks) intact while removing
+   visual motion and hover styling.
+*/
+@media (min-width: 0px) {
+  .menu-container,
+  .menu-container * {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  .menu-container *:hover,
+  .menu-container *:focus,
+  .menu-container *:active {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    /* keep the pointer cursor for clickable elements */
+    cursor: inherit !important;
+  }
+
+  /* Remove hover pseudo-element effects often used for links/buttons */
+  .menu-container a:hover::after,
+  .menu-container a:focus::after,
+  .menu-container .nav__link:hover::after {
+    width: 0 !important;
+    opacity: 0 !important;
+  }
+}
+
+/* End menu integration styles */
+
+/* --- Center specific section grids so their vertical dividers align with section headers --- */
+.section-block.center-divider {
+  /* default nudge for dividers to the right; tune per-section using a modifier class */
+  --divider-shift: 18px;
+}
+
+.section-block.center-divider .grid-2-col,
+.section-block.center-divider .grid-3-col {
+  /* Restrict width so the center of the grid lines up with the page center */
+  max-width: 980px; /* adjust if you want wider/narrower centered grids */
+  margin: 0 auto; /* center the grid inside the menu container */
+  box-sizing: border-box;
+  /* Nudge the visual position of the entire grid to the right so vertical
+     dividers line up precisely under centered headers. Tunable via
+     --divider-shift on the .section-block.center-divider element. */
+  transform: translateX(var(--divider-shift));
+}
+
+.section-block.center-divider .col-content {
+  /* keep existing column padding but ensure symmetry */
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.section-block.center-divider .grid-2-col > div:nth-child(1) {
+  /* For two-column sections we only want a single middle divider (right side
+     of the left column). Ensure the right column does not render a divider. */
+  border-right: 1px solid rgba(255,255,255,0.22);
+}
+.section-block.center-divider .grid-2-col > div:nth-child(2) {
+  border-right: none;
+}
+.section-block.center-divider .grid-3-col > div:nth-child(1),
+.section-block.center-divider .grid-3-col > div:nth-child(2) {
+  /* For three-column sections (appetizers) keep both dividers visible but
+     the entire grid is shifted right by the same amount so the gap remains */
+  border-right: 1px solid rgba(255,255,255,0.22);
+}
+
+/* Slightly larger nudge for appetizers to visually match the printed layout */
+.section-block.center-divider.appetizers { --divider-shift: 22px; }
+
+
 /* Responsive adjustments for home section */
 @media screen and (max-width: 768px){
   .home__container{
@@ -1203,7 +1713,25 @@ body.dark-theme .services__img {
       height: auto;
       margin-bottom: 0; /* tighten spacing to bring socials closer */
       display: block;
-    }
+      transition: transform .35s ease, box-shadow .35s ease, filter .35s ease;
+      will-change: transform, box-shadow;
+}
+
+/* Footer logo interactive hover */
+.footer__logo-img:hover,
+.footer__logo-img:focus-visible{
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: var(--logo-glow), 0 0 14px var(--logo-accent-glow);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.06));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__logo-center img,
+  .footer__logo-img {
+    transition: none !important;
+    animation: none !important;
+  }
+}
 
 .footer__social-group {
       display: flex;
@@ -1465,7 +1993,8 @@ body.dark-theme .services__img {
 .order-page__container,
 .about-page__container,
 .contact-page__container {
-  max-width: 1000px;
+  /* Allow page section containers to be wider so inner components (menu, outlines) can expand */
+  max-width: min(1320px, 96%);
   margin: 0 auto;
   padding: 6rem 1rem 4rem;
   text-align: center;

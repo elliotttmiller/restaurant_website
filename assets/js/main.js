@@ -160,3 +160,47 @@ specialsLinks.forEach(link => {
         }
     });
 });
+
+/*==================== MENU TITLE LINE DETECTION ====================*/
+// Tag .menu-item with .single-line or .two-line depending on whether
+// .item-name wraps to multiple lines. This allows CSS to tighten spacing
+// for single-line items only.
+function tagMenuTitleLines() {
+    const items = document.querySelectorAll('.menu-item');
+    items.forEach(item => {
+        const title = item.querySelector('.item-name');
+        if (!title) return;
+
+        const cs = window.getComputedStyle(title);
+        // Parse line-height; fallback to computed font-size * 1.2 if 'normal'
+        let lineHeight = cs.lineHeight;
+        let lh = 0;
+        if (lineHeight === 'normal') {
+            lh = parseFloat(cs.fontSize) * 1.2;
+        } else {
+            lh = parseFloat(lineHeight);
+        }
+
+        // Use offsetHeight to get the rendered height including fractional pixels
+        const titleHeight = title.offsetHeight;
+
+        // If titleHeight is greater than one line height (with small tolerance), it's multi-line
+        const isMulti = titleHeight > (lh + 1); // 1px tolerance
+
+        item.classList.remove('single-line', 'two-line');
+        item.classList.add(isMulti ? 'two-line' : 'single-line');
+    });
+}
+
+// Run on DOMContentLoaded and on resize (debounced)
+document.addEventListener('DOMContentLoaded', () => {
+    tagMenuTitleLines();
+});
+
+let _menuTitleResizeTimer = null;
+window.addEventListener('resize', () => {
+    clearTimeout(_menuTitleResizeTimer);
+    _menuTitleResizeTimer = setTimeout(() => {
+        tagMenuTitleLines();
+    }, 150);
+});

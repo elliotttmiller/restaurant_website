@@ -1,0 +1,225 @@
+<!-- PASTE THIS IN THE <HEAD> SECTION OF YOUR WEBSITE -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* --- GENERAL SETTINGS --- */
+    body {
+        background-color: #fff; 
+        margin: 0;
+        padding: 20px;
+        line-height: 1.3;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .menu-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    /* --- LOGO SETTINGS --- */
+    header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .menu-logo {
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* --- SECTION HEADERS ("APPETIZERS", etc.) --- */
+    .section-header {
+        text-align: center;
+        margin: 35px 0 5px 0;
+    }
+    .section-header h3 {
+        font-family: 'Oswald', sans-serif; /* The condensed font */
+        color: #982b2c; /* Exact Menu Red */
+        font-size: 2.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-bottom: 3px solid #982b2c;
+        display: inline-block;
+        margin: 0;
+        padding-bottom: 2px;
+        letter-spacing: 1px;
+        line-height: 1;
+    }
+
+    .section-note {
+        text-align: center;
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic;
+        font-size: 0.95rem;
+        color: #444;
+        margin-top: 8px;
+        margin-bottom: 25px;
+        padding: 0 10px;
+    }
+
+    /* --- MENU ITEMS --- */
+    .menu-item {
+        margin-bottom: 14px;
+        text-align: center; 
+    }
+    
+    /* The top line: NAME ... PRICE */
+    .item-top {
+        display: flex;
+        justify-content: center; 
+        align-items: baseline;
+        width: 100%;
+        font-family: 'Oswald', sans-serif; /* Matches image perfectly */
+        font-size: 1.05rem;
+        color: #000;
+    }
+
+    .item-name {
+        font-weight: 700; /* Bold weight */
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* The 3 Dots */
+    .item-dots {
+        margin: 0 4px;
+        font-weight: 700;
+    }
+    .item-dots::after {
+        content: "..."; 
+    }
+
+    .item-price {
+        font-weight: 700;
+    }
+
+    /* The Description: Classic Serif Italic */
+    .item-desc {
+        font-family: "Times New Roman", Times, serif;
+        font-size: 0.95rem;
+        font-style: italic;
+        color: #222;
+        margin-top: 1px;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* --- LAYOUT GRIDS --- */
+    .grid-3-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        column-gap: 20px; 
+    }
+    
+    .grid-2-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 30px;
+    }
+
+    .col-content {
+        padding: 0 5px;
+    }
+
+    /* Vertical Divider Lines (Desktop Only) */
+    @media (min-width: 769px) {
+        .grid-3-col > div:nth-child(1), 
+        .grid-3-col > div:nth-child(2) {
+            border-right: 1px solid #888;
+        }
+        .grid-2-col > div:nth-child(1) {
+            border-right: 1px solid #888;
+        }
+    }
+
+    /* --- PIZZA SECTION --- */
+    .pizza-grid {
+        display: flex;
+        justify-content: space-between;
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 30px;
+    }
+    .pizza-col {
+        flex: 1;
+        text-align: center;
+        border-right: 1px solid #888;
+        padding: 0 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .pizza-col:last-child { border-right: none; }
+    
+    .pizza-title { 
+        font-family: 'Oswald', sans-serif;
+        font-weight: 700; 
+        text-transform: uppercase; 
+        display: block; 
+        font-size: 1rem;
+    }
+    .pizza-desc { 
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic; 
+        font-size: 0.9rem; 
+    }
+
+    /* --- SPECIALS LIST --- */
+    .specials-list {
+        text-align: center;
+        list-style: none;
+        padding: 0;
+    }
+    .specials-list li {
+        margin-bottom: 10px;
+        font-family: 'Oswald', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- EXTRAS & WARNINGS --- */
+    .extra-sauces {
+        text-align: center;
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic;
+        font-size: 0.9rem;
+        margin-top: 20px;
+        color: #444;
+    }
+
+    .warning-box {
+        border: 1px solid #aaa;
+        padding: 8px;
+        text-align: center;
+        font-family: "Times New Roman", Times, serif;
+        font-style: italic;
+        font-size: 0.85rem;
+        margin: 40px auto;
+        max-width: 800px;
+        color: #555;
+    }
+
+    /* --- MOBILE RESPONSIVENESS --- */
+    @media (max-width: 768px) {
+        .grid-3-col, .grid-2-col, .pizza-grid {
+            display: flex;
+            flex-direction: column;
+        }
+        .grid-3-col > div, .grid-2-col > div, .pizza-col {
+            border-right: none !important; 
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .item-desc { padding: 0 10px; }
+    }
+</style>
