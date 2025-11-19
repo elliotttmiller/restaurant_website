@@ -186,7 +186,7 @@
         row.className = 'cart-item';
         // description intentionally omitted in cart items
         const descHtml = item.desc ? `<div class="cart-item-desc muted">${escapeHtml(item.desc)}</div>` : '';
-        // layout: [ name | qty | price ] with a small top-right remove icon
+        // layout: left (name) | right-group (qty + price) with a small top-right remove icon
         row.innerHTML = `
           <div class="cart-item-left">
             <div class="cart-item-name">${escapeHtml(item.name)}</div>
