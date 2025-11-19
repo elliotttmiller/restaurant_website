@@ -1747,6 +1747,14 @@ body.dark-theme .button:hover{
   font-family: "Times New Roman", Times, serif;
   margin: 0.25rem 0 0.5rem 0;
 }
+/* Ensure product titles and descriptions are centered across the site
+   so they match the centered page and section headings. This overrides any
+   page-scoped nudges that may have left them left-aligned. */
+.product-name,
+.product-desc{
+  text-align: center !important;
+  margin-left: 0 !important;
+}
 /* Place price above the Add button aligned to the far right of the card */
 .product-foot{
   display: flex;
@@ -1914,9 +1922,12 @@ body.dark-theme .button:hover{
    Reset on small screens to keep the stacked, centered layout. */
 .products__Header .order-category,
 .products__header .order-category{
-  display: inline-block;
-  margin-left: -1.5rem; /* increased left nudge (moved further left) */
-  text-align: left;
+  display: block;
+  /* Use centered layout for the main products header so section headings and
+     product titles can follow the same visual center. This removes the previous
+     left-nudge which caused misalignment. */
+  margin-left: 0;
+  text-align: center;
 }
 
 @media screen and (max-width: 768px){
@@ -1928,10 +1939,43 @@ body.dark-theme .button:hover{
    without altering markup or layout of controls. Revert on small screens. */
 .order-page .product-name,
 .order-page .product-desc{
-  /* use margin instead of transform (order-page disables transforms globally) */
-  margin-left: 1.6rem;
-  /* ensure the text inside the title/desc isn't centered by the card container */
-  text-align: left;
+  /* Reset product title/description offset so they center under the main header
+     and section headings (Option B - consistent centered alignment). */
+  margin-left: 0;
+  text-align: center;
+}
+
+/* Align section headings (Appetizers, Burgers, etc.) with product titles
+   so the H2s line up horizontally with individual items. This counteracts
+   the page-title left nudge above which was intended only for the main header. */
+.order-section .order-category,
+.products-list-section + .order-category,
+.products-list-section ~ .order-category{
+  margin-left: 0;
+  text-align: center;
+}
+
+/* Reduce vertical gap between the section heading and the first product so
+   headings visually align with product titles. This tightens the vertical
+   rhythm specifically for order sections without affecting other pages. */
+.order-section .order-category{
+  margin-bottom: 0.6rem; /* smaller gap under the H2 */
+  /* add top padding so section headings feel vertically balanced
+     (matches the visual weight of the bottom gap) */
+  padding-top: 0.6rem;
+}
+
+.products-list-section{
+  margin-top: 0; /* remove any default top gap */
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem; /* consistent gap between product cards */
+}
+
+/* Slightly reduce top padding on the first product card so its title sits
+   closer to the section heading for tighter alignment. */
+.products-list-section .product-card:first-child{
+  padding-top: 0.6rem;
 }
 
 .order-page .product-foot{
@@ -2329,16 +2373,19 @@ body.dark-theme .services__img {
       height: auto;
       margin-bottom: 0; /* tighten spacing to bring socials closer */
       display: block;
-      transition: transform .35s ease, box-shadow .35s ease, filter .35s ease;
-      will-change: transform, box-shadow;
+      /* Disable interactive animations on the footer logo to keep it visually
+         stable on hover/tap (user requested). */
+      transition: none !important;
+      will-change: auto;
 }
 
 /* Footer logo interactive hover */
 .footer__logo-img:hover,
 .footer__logo-img:focus-visible{
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: var(--logo-glow), 0 0 14px var(--logo-accent-glow);
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.06));
+  /* Neutralize hover/focus visual changes */
+  transform: none !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2655,6 +2702,24 @@ body.dark-theme .services__img {
   overflow: hidden;
 }
 
+/* Wider order-page outline and reduced side padding specifically for the Order page.
+   This keeps other pages unchanged while making the Order outline reach closer
+   to the viewport edge and reducing internal padding for a denser layout. */
+@media screen and (min-width: 768px) {
+  .order-page__container{
+    /* allow the order container to occupy more of the viewport on medium+ screens */
+    max-width: min(1400px, 96%);
+    /* reduce left/right gutter so the outline sits nearer the screen edge */
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .order-page__content{
+    /* tighten the inner padding of the outline */
+    padding: 2rem 1rem;
+  }
+}
+
 .menu-page__content::before,
 .order-page__content::before,
 .about-page__content::before {
@@ -2893,6 +2958,67 @@ body.dark-theme .services__img {
 
   .contact-card h3 {
     font-size: 1.3rem;
+  }
+}
+
+/* Mobile-wide container tightening: bring outlines closer to screen edges and
+   reduce internal padding for a denser mobile layout. Placed near EOF to
+   override earlier, more generic rules. */
+@media screen and (max-width: 768px) {
+  .menu-page__container,
+  .order-page__container,
+  .about-page__container,
+  .contact-page__container {
+    /* reduce horizontal gutters so outlines sit nearer to the viewport edge */
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    max-width: 100% !important;
+  }
+
+  .menu-page__content,
+  .order-page__content,
+  .about-page__content,
+  .contact-page__content {
+    /* tighten inner content padding so the outline feels less bulky on phones */
+    padding: 1.25rem 0.5rem !important;
+    border-radius: 16px; /* slightly smaller radius on mobile */
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .menu-page__container,
+  .order-page__container,
+  .about-page__container,
+  .contact-page__container {
+    padding-left: 0.35rem !important;
+    padding-right: 0.35rem !important;
+  }
+
+  .menu-page__content,
+  .order-page__content,
+  .about-page__content,
+  .contact-page__content {
+    padding: 1rem 0.35rem !important;
+    border-radius: 12px;
+  }
+}
+
+/* Stronger, high-specificity override for the Order page to ensure the outline
+   container reaches closer to the viewport edge and has reduced inner padding.
+   Added late in the file so it wins over earlier, more generic rules. */
+@media screen and (min-width: 768px) {
+  .order-page .order-page__container,
+  .order-page__container{
+    max-width: 96% !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .order-page .order-page__content,
+  .order-page__content{
+    padding: 1.75rem 0.75rem !important;
   }
 }
 

@@ -81,25 +81,90 @@
 
   let cart = loadCart();
 
-  // Render products
+  // Render products grouped into sections (mirrors menu layout)
   function renderProducts(){
     if(!productsList) return;
     productsList.innerHTML = '';
+
+    // helper to map id prefix to human-friendly section title
+    const sectionMap = {
+      app: 'Appetizers',
+      bur: 'Burger Baskets',
+      sea: 'Chicken & Seafood',
+      snd: 'Sandwiches',
+      sal: 'Salad Bar',
+      piz: "Jimmy's Pizza"
+    };
+
+    // Group products by prefix before the first dash (e.g. 'app-', 'bur-')
+    const groups = {};
+    const order = []; // preserve insertion order
     PRODUCTS.forEach(p => {
-      const card = document.createElement('article');
-      card.className = 'product-card modern-container';
-      card.innerHTML = `
-        <h3 class="product-name">${escapeHtml(p.name)}</h3>
-        <p class="product-desc">${escapeHtml(p.desc)}</p>
-        <div class="product-foot">
-          <span class="product-price">${formatMoney(p.price)}</span>
-          <button class="button add-to-cart" data-id="${p.id}" aria-label="Add ${escapeHtml(p.name)} to cart"><i class='bx bx-cart-alt'></i></button>
-        </div>
-      `;
-      productsList.appendChild(card);
+      const prefix = (p.id || '').split('-')[0] || 'misc';
+      if(!groups[prefix]){ groups[prefix] = []; order.push(prefix); }
+      groups[prefix].push(p);
     });
 
-    // Attach listeners
+    // Preferred section order if present, fall back to discovered order
+    const preferred = ['app','bur','sea','snd','sal','piz'];
+    const finalOrder = [];
+    preferred.forEach(k => { if(groups[k]) finalOrder.push(k); });
+    order.forEach(k => { if(!finalOrder.includes(k)) finalOrder.push(k); });
+
+  // Remove the Salad Bar section from the Order page (not available for online ordering)
+  const filteredOrder = finalOrder.filter(k => k !== 'sal');
+
+  // Render each section with a heading and its products
+  filteredOrder.forEach(sectionKey => {
+      const products = groups[sectionKey];
+      const title = sectionMap[sectionKey] || sectionKey;
+
+      // section wrapper (gives meaningful anchor IDs for quick navigation)
+      const sectionEl = document.createElement('section');
+      sectionEl.className = 'order-section';
+      sectionEl.id = `section-${sectionKey}`;
+
+      const heading = document.createElement('h2');
+      heading.className = 'order-category';
+      heading.textContent = title;
+      sectionEl.appendChild(heading);
+
+      // Use the same descriptive copy used on the Menu page for consistency
+      if(sectionKey === 'bur'){
+        const desc = document.createElement('p');
+        // match the menu page class so shared CSS rules apply
+        desc.className = 'section-note';
+        desc.textContent = 'Includes choice of french fries, tater tots or coleslaw. Upgrade to seasoned fries $1.00, sweet potato fries or onion petals $2.00 or salad bar $4.00. Extra burger patty $3.00';
+        sectionEl.appendChild(desc);
+      } else if(sectionKey === 'sea'){
+        const desc = document.createElement('p');
+        desc.className = 'section-note';
+        desc.textContent = 'Includes choice of french fries, tater tots or coleslaw. Upgrade to seasoned fries $1.00, sweet potato fries or onion petals $2.00 or salad bar $4.00.';
+        sectionEl.appendChild(desc);
+      }
+
+      const listWrap = document.createElement('div');
+      listWrap.className = 'products-list-section';
+
+      products.forEach(p => {
+        const card = document.createElement('article');
+        card.className = 'product-card modern-container';
+        card.innerHTML = `
+          <h3 class="product-name">${escapeHtml(p.name)}</h3>
+          <p class="product-desc">${escapeHtml(p.desc)}</p>
+          <div class="product-foot">
+            <span class="product-price">${formatMoney(p.price)}</span>
+            <button class="button add-to-cart" data-id="${p.id}" aria-label="Add ${escapeHtml(p.name)} to cart"><i class='bx bx-cart-alt'></i></button>
+          </div>
+        `;
+        listWrap.appendChild(card);
+      });
+
+      sectionEl.appendChild(listWrap);
+      productsList.appendChild(sectionEl);
+    });
+
+    // Attach listeners to all add buttons inside productsList
     const addBtns = productsList.querySelectorAll('.add-to-cart');
     addBtns.forEach(btn => btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
