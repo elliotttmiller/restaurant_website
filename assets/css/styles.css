@@ -1194,17 +1194,18 @@ body.dark-theme .services__img {
 }
 
 .footer__logo-img {
-      width: 120px;
+      width: 240px; /* increased to ~2x the previous size */
+      max-width: 100%; /* prevent overflow in narrow columns */
       height: auto;
-      margin-bottom: 0.25rem; /* decreased spacing to bring socials closer */
+      margin-bottom: 0; /* tighten spacing to bring socials closer */
       display: block;
     }
 
 .footer__social-group {
       display: flex;
       justify-content: center;
-      gap: 0.75rem;
-      margin-top: 0.25rem; /* decreased spacing to bring socials closer */
+      gap: 0.5rem; /* tighter gap between social icons */
+      margin-top: 0; /* remove extra top spacing */
     }
 
 .footer__social {
