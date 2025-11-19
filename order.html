@@ -60,7 +60,13 @@
                 </div>
 
                 <!-- Theme Toggle (Desktop) -->
-                <i class='bx bx-moon change-theme' id="theme-button"></i>
+                <!-- Theme Toggle (Desktop) moved to left nav via DOM placement; visually anchored left via CSS -->
+                <i class='bx bx-moon change-theme' id="theme-button" aria-label="Toggle dark mode" role="button" tabindex="0"></i>
+
+                <!-- Cart Button (opens/focuses the cart panel) -->
+                <a href="#" class="cart-button" id="cart-button" aria-label="Open cart">
+                    <i class='bx bx-shopping-bag'></i>
+                </a>
 
                 <!-- Mobile Toggle -->
                 <div class="nav__toggle" id="nav-toggle">
@@ -73,20 +79,60 @@
             <!--========== ORDER PAGE ==========-->
             <section class="order-page section bd-container" id="order-page">
                 <div class="order-page__container">
-                    <h1 class="section-title">Order Online</h1>
-                    <p class="section-description">Order your favorite meals for pickup or delivery</p>
+                    <p class="section-description">Place an order online or call us for pickup</p>
                     
                     <div class="order-page__content">
-                        <h2 class="order-category">Online Ordering Coming Soon</h2>
-                        <p class="order-message">We're working on bringing you a convenient online ordering system. In the meantime, please call us at (320) 351-3505 to place your order.</p>
-                        
-                        <div class="order-info">
-                            <h3>Quick Order Options:</h3>
-                            <ul>
-                                <li><strong>Phone:</strong> (320) 351-3505</li>
-                                <li><strong>In-Person:</strong> Visit us at 43356 County Rd. 112, Sauk Centre, MN 56378</li>
-                                <li><strong>Hours:</strong> Mon-Thu 11am-11pm, Fri-Sat 11am-1am, Sun 11am-10pm</li>
-                            </ul>
+                        <div class="order-grid">
+                            <!-- Products list -->
+                            <section class="products" aria-label="Menu items for ordering">
+                                <div class="products__header">
+                                    <h2 class="order-category">Order Online</h2>
+                                    <p class="order-message">Choose items and complete checkout for pickup or delivery.</p>
+                                </div>
+                                <div id="products-list" class="products__list">
+                                    <!-- JS will render product cards here -->
+                                </div>
+                            </section>
+
+                            <!-- Cart / Checkout panel -->
+                            <aside class="cart-panel" aria-label="Order summary and checkout">
+                                <div class="cart__header">
+                                    <h3>Your Order</h3>
+                                    <button id="clear-cart" class="button">Clear</button>
+                                </div>
+
+                                <div id="cart-items" class="cart__items" aria-live="polite">
+                                    <!-- Cart items rendered by JS -->
+                                    <p class="muted">Your cart is empty</p>
+                                </div>
+
+                                <div class="cart__totals">
+                                    <div class="cart__row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
+                                    <div class="cart__row"><span>Tax (6%)</span><span id="cart-tax">$0.00</span></div>
+                                    <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
+                                </div>
+
+                                <form id="checkout-form" class="checkout-form" novalidate>
+                                    <fieldset>
+                                        <legend>Contact & Pickup</legend>
+                                        <label for="customer-name">Name</label>
+                                        <input id="customer-name" name="name" type="text" required placeholder="Full name">
+
+                                        <label for="customer-phone">Phone</label>
+                                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212">
+
+                                        <label for="order-type">Order type</label>
+                                        <select id="order-type" name="type">
+                                            <option value="pickup">Pickup</option>
+                                            <option value="delivery">Delivery</option>
+                                        </select>
+                                    </fieldset>
+
+                                    <button id="place-order" class="button" type="submit">Place Order</button>
+                                </form>
+
+                                <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
+                            </aside>
                         </div>
                     </div>
                 </div>
@@ -143,5 +189,6 @@
 
         <!--========== MAIN JS ==========-->
         <script src="assets/js/main.js"></script>
+        <script src="assets/js/order.js"></script>
     </body>
 </html>
