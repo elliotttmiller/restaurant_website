@@ -896,8 +896,8 @@ header {
   font-size: 0.95rem;
   /* lighter grey to keep descriptions readable but de-emphasized */
   color: rgba(255,255,255,0.65);
-  margin-top: 8px;
-  margin-bottom: 25px;
+  margin-top: 4px; /* reduced to tighten spacing under the logo */
+  margin-bottom: 18px;
   padding: 0 10px;
 }
 
@@ -1113,13 +1113,17 @@ header {
     padding: 8px 0;
   }
 
+  /* Use a two-column grid for the item top: centered name on the left column
+     and a right-anchored price in the second column. This is more robust than
+     absolute positioning and ensures name/price alignment even when the name
+     wraps to two lines. */
   .item-top {
-    display: flex;
-    justify-content: center; /* center the name */
-    align-items: baseline;
+    display: grid;
+    grid-template-columns: 1fr auto; /* flexible name column + auto-sized price */
+    justify-items: center; /* center the name horizontally within its column */
+    align-items: center;   /* vertically center both name and price */
     gap: 12px;
     min-height: 44px; /* slightly taller to accommodate two-line names */
-    position: relative; /* allow absolute positioning of price */
   }
 
   .item-name {
@@ -1128,9 +1132,10 @@ header {
     letter-spacing: 0.5px;
     text-align: center; /* center the title above details */
     display: block;
-    /* Nudge first (top) line slightly down so it visually lines up with the
-       right-anchored price. Tuned via --menu-title-nudge on .menu-container. */
-    transform: translateY(var(--menu-title-nudge));
+    /* Remove fragile translate-based nudging; grid alignment keeps price
+       and title vertically aligned. If micro-nudging is still needed we can
+       reintroduce a small translate, but prefer avoiding absolute offsets. */
+    transform: none;
     width: 100%;
     white-space: normal; /* allow wrapping */
     margin: 0; /* reset side margin when centered */
@@ -1142,12 +1147,47 @@ header {
   .item-price {
     font-weight: 700;
     white-space: nowrap;
-    position: absolute;
-    right: 0;
-    /* Align price vertically with the (possibly nudged) first line of the
-       item title. We add the menu-title-nudge value so the price moves down
-       the same amount as the title when that variable is used. */
-    top: calc(0.3rem + var(--menu-title-nudge, 0rem));
+    /* Use grid placement rather than absolute positioning so the price always
+       stays aligned with the title. */
+    position: static;
+    justify-self: end; /* anchor price to the right within its column */
+    align-self: center;
+    margin-left: 8px;
+  }
+
+  /* Make the entire menu item a grid so the description can align under the name
+     column (first column) rather than spanning the full width. This keeps the
+     description visually centered below the title even when the price sits in
+     the right column. */
+  .menu-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    gap: 6px 12px; /* row-gap, column-gap */
+  }
+
+  /* Treat the top row wrapper as a transparent container so its children
+     (.item-name and .item-price) participate in the parent grid directly. */
+  .item-top {
+    display: contents;
+  }
+
+  /* Place elements into the parent grid explicitly */
+  .item-name {
+    grid-column: 1 / 2;
+    justify-self: center;
+  }
+
+  .item-price {
+    grid-column: 2 / 3;
+    justify-self: end;
+  }
+
+  .item-desc {
+    grid-column: 1 / 2; /* keep description under the title column */
+    justify-self: center;
+    margin-top: 4px;
+    max-width: 90%;
   }
 
   /* Keep descriptions centered beneath the item as in the print menu */
@@ -2315,4 +2355,38 @@ body.dark-theme .services__img {
   font-family: var(--body-font);
   font-size: var(--normal-font-size);
   color: var(--text-color-light);
+}
+
+/* ===== Menu logo (inline SVG) - minimal, responsive and animation-free ===== */
+.menu-logo{
+  display: block;
+  /* Prefer the viewport-limited width but cap the rendered height so the logo doesn't become massive */
+  width: min(100%, 920px);
+  height: auto;
+  max-height: 440px; /* increased to ~2x to make the header larger while keeping it responsive */
+  margin: 0 auto 1rem auto;
+  transition: none !important;
+  -webkit-transition: none !important;
+  will-change: auto !important;
+  animation: none !important;
+}
+
+/* Center header wrapper and keep the logo restrained */
+.menu-container > header{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* tighten vertical spacing between logo and following note */
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Ensure the menu logo and its internal elements don't animate or transform */
+.menu-container .menu-logo,
+.menu-container .menu-logo *{
+  transform: none !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  animation: none !important;
+  pointer-events: none; /* make it non-interactive so hover styles elsewhere won't affect it */
 }
