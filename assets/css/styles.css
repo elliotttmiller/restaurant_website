@@ -996,8 +996,9 @@ img{
     padding: 2.5rem 2.5rem 2.5rem 2.5rem;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    /* Align content to the top so card headings line up across columns */
+    justify-content: flex-start;
+    align-items: flex-start;
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     overflow-wrap: break-word;
     word-break: break-word;
@@ -1006,7 +1007,8 @@ img{
   .home__specials:first-child {
     padding: 2.5rem 2.5rem 2.5rem 0.5rem;
     text-align: center;
-    justify-content: center;
+    /* keep first card content visually centered horizontally but start at top */
+    justify-content: flex-start;
     align-items: center;
     max-width: 500px;
     margin-left: auto;
@@ -1706,6 +1708,78 @@ header {
     padding-left: 1.5rem;
   }
 }
+
+/* ---------- Targeted fixes: Specials & Services responsiveness ---------- */
+/* These overrides improve fluid reflow between desktop and mobile and
+   avoid card overlap by using auto-fit/minmax grids and removing heavy
+   asymmetric padding at intermediate breakpoints. Safe, reversible. */
+@media screen and (max-width: 991px) {
+  /* Make specials layout more fluid: switch to auto-fit grid so items
+     wrap naturally instead of using a rigid flex with fixed gaps. */
+  .home__specials-wrapper {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    padding: 0 1rem;
+    align-items: stretch;
+    margin-bottom: 2rem;
+  }
+
+  /* Reduce heavy left padding and don't force tall fixed heights. */
+  .home__specials {
+    padding: 1.25rem;
+    padding-left: 1rem; /* override earlier asymmetric padding */
+    padding-right: 1rem;
+    min-height: auto;
+    box-sizing: border-box;
+  }
+
+  .home__specials:first-child {
+    max-width: none;
+    margin: 0;
+  }
+
+  .home__specials:last-child {
+    text-align: center;
+    align-items: center;
+  }
+
+  .home__specials .specials__list {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Make services grid more flexible on tablets and small desktops. */
+  .services__container {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  .services__content {
+    padding: 1rem;
+    min-height: auto;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /* Slightly smaller swipe-cards so they don't force overflow at some
+     intermediate densities. Keep horizontal-swipe UX but reduce card width. */
+  .services__content {
+    flex: 0 0 70%; /* a bit smaller than previous 78% */
+    min-width: 200px;
+    scroll-snap-align: center;
+  }
+
+  /* Tighten specials padding on very small screens */
+  .home__specials {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
 
 /*========== BUTTONS ==========*/
 .button{
@@ -2482,12 +2556,129 @@ body.dark-theme .services__img {
 }
 
 @media screen and (max-width: 768px) {
+  /* Mobile footer: responsive 2-column grid with logo spanning full width.
+     This keeps items compact and prevents long vertical stacks while
+     preserving good tap targets and alignment. */
   .footer__container {
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.5rem 0.5rem 0.5rem 0.5rem;
+    display: grid;
+    /* two columns for content; rows defined by grid-template-areas below */
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "links address"
+      "hours hours"
+      "logo logo"
+      "copy copy";
+    gap: 0.85rem 1rem;
+    align-items: start;
+    padding: 1rem 0.75rem 0.75rem 0.75rem;
+    width: 100%;
   }
+
+  /* Assign grid areas by source order: nth-child mapping
+     (HTML order: 1=logo, 2=links, 3=address, 4=hours) */
+  .footer__container .footer__content:nth-child(2) { grid-area: links; }
+  .footer__container .footer__content:nth-child(3) { grid-area: address; }
+  .footer__container .footer__content:nth-child(4) { grid-area: hours; }
+  .footer__container .footer__content:nth-child(1) { grid-area: logo; justify-self: center; text-align: center; }
+
+  /* Logo + socials centered inline at the bottom of the footer grid */
+  .footer__container .footer__content:nth-child(1){
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    /* tightened gap so logo and icon sit closer together on mobile */
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+  }
+  /* make logo and icon visually balanced on small screens */
+  /* slightly reduce logo height and tighten spacing to match the smaller icon */
+  .footer__logo-img { width: auto; height: 40px; margin: 0; display: inline-block; }
+  .footer__social-group { display: inline-flex; gap: 0.2rem; margin: 0; }
+  /* reduce facebook icon size so it sits inline with the logo */
+  .footer__social { font-size: 0.95rem; padding: 0.12rem; line-height: 1; }
+  /* ensure the icon itself doesn't add extra height */
+  .footer__social i { display: inline-block; vertical-align: middle; }
+  .footer__social { font-size: 1.9rem; padding: 0.45rem; border-radius: 8px; transition: background .18s, color .18s; }
+  .footer__social:hover, .footer__social:focus { background: rgba(0,0,0,0.04); color: var(--first-color); }
+
+  /* Content blocks: left-aligned for readability in grid columns */
+  .footer__content { text-align: left; align-items: flex-start; padding: 0.3rem 0; }
+  .footer__content:nth-child(2) { padding-left: 0.25rem; }
+  .footer__content ul { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.25rem 0 0 0; }
+  .footer__link { display: inline-block; padding: 0.45rem 0.6rem; border-radius: 8px; min-width: 0; }
+  .footer__title{ font-size: 1.02rem; margin-bottom: 0.35rem }
+
+  /* Hide the 'All rights reserved' line on mobile per request */
+  .footer__copy { display: none; }
+
+  /* --------- Prevent overlapping and improve general mobile fluidity --------- */
+  .l-main .bd-container:not(.home__container) { padding: calc(var(--header-height) + 1.25rem) 1rem 2rem; }
+
+  /* Tidy up services grid and cards on small screens */
+  .services__container { grid-template-columns: repeat(2, minmax(140px, 1fr)); row-gap: 1rem; column-gap: 0.75rem; }
+  .services__content, .service-card { padding: 1rem; }
+  .services__description, .service-card__description { padding: 0 0.6rem; }
+  .services__content, .service-card { min-height: 120px; display:flex; flex-direction:column; justify-content:flex-start; }
+}
+
+/* Very small screens: make services and footer sections horizontally scrollable
+   for a sleek, app-like mobile UX. This improves discoverability and avoids
+   long vertical stacks while keeping good tap targets. */
+@media screen and (max-width: 480px) {
+  /* SERVICES: horizontal scroll cards */
+  .services__container {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .services__content {
+    flex: 0 0 78%; /* each card takes most of the viewport width */
+    min-width: 220px;
+    scroll-snap-align: center;
+    padding: 1rem;
+    margin: 0;
+    border-radius: 14px;
+  }
+
+  /* SERVICE CARD visuals: tighter text and icon spacing for mobile */
+  .services__img { width: 56px; height: 56px; }
+  .services__title { font-size: 1rem; }
+  .services__description { padding: 0 0.8rem; font-size: 0.95rem; }
+
+  /* FOOTER: horizontal scroll for content sections; logo/socials stay at the end */
+  .footer__container {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding: 0.75rem 0.6rem;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    align-items: flex-start;
+  }
+  .footer__content {
+    flex: 0 0 auto;
+    min-width: 220px;
+    scroll-snap-align: start;
+    background: linear-gradient(135deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+  }
+  /* Put logo/socials at the end of the scroll sequence and center it */
+  .footer__container .footer__content:nth-child(1){ order: 99; flex: 0 0 auto; min-width: 180px; display:flex; align-items:center; justify-content:center; gap:0.4rem; }
+  .footer__container .footer__content:nth-child(2){ order: 1; }
+  .footer__container .footer__content:nth-child(3){ order: 2; }
+  .footer__container .footer__content:nth-child(4){ order: 3; }
+
+  /* Make links and lists comfortable to tap inside the horizontal cards */
+  .footer__link { display:block; padding: 0.5rem 0; }
+  .footer__title{ margin-bottom: 0.5rem }
+
+  /* Hide the copyright text on tiny screens (already hidden for <=768px) */
+  .footer__copy{ display:none }
 }
 
 /* Slightly extend the right edge of the order outline on wider screens so
