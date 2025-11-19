@@ -78,9 +78,12 @@ body.dark-theme{
 
 /*========== Button Dark/Light ==========*/
 .change-theme{
-  position: absolute;
-  right: 1.5rem;
-  top: 50%;
+  /* Keep the theme toggle visually fixed to the viewport's right edge
+     while staying vertically centered inside the header. Using fixed
+     positioning avoids being affected by the nav container padding. */
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  top: calc(var(--header-height) / 2);
   transform: translateY(-50%);
   color: var(--text-color);
   font-size: 1.5rem;
@@ -90,6 +93,7 @@ body.dark-theme{
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
 }
 
 .change-theme:hover{
@@ -1363,7 +1367,8 @@ body.dark-theme .services__img {
   }
 
   .change-theme{
-    right: 2.5rem;
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    top: calc((var(--header-height) + 1.5rem) / 2);
   }
 }
 
@@ -1413,11 +1418,12 @@ body.dark-theme .services__img {
 
   .nav__menu--right .nav__list{
     gap: 2rem;
-    padding-left: 8.5rem;
+    padding-left: 4.5rem; /* match left side so spacing to center logo is symmetric */
   }
 
   .change-theme{
-    right: 3rem;
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    top: calc((var(--header-height) + 1.5rem) / 2);
   }
 
   .home__img{
@@ -1442,7 +1448,8 @@ body.dark-theme .services__img {
   }
 
   .change-theme{
-    right: 5rem;
+    right: clamp(0.75rem, 2vw, 1.5rem);
+    top: calc((var(--header-height) + 1.5rem) / 2);
   }
 }
 
