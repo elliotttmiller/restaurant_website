@@ -94,45 +94,10 @@
                                 </div>
                             </section>
 
-                            <!-- Cart / Checkout panel -->
-                            <aside class="cart-panel" aria-label="Order summary and checkout">
-                                <div class="cart__header">
-                                    <h3>Your Order</h3>
-                                    <button id="clear-cart" class="button">Clear</button>
-                                </div>
-
-                                <div id="cart-items" class="cart__items" aria-live="polite">
-                                    <!-- Cart items rendered by JS -->
-                                    <p class="muted">Your cart is empty</p>
-                                </div>
-
-                                <div class="cart__totals">
-                                    <div class="cart__row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
-                                    <div class="cart__row"><span>Tax (6%)</span><span id="cart-tax">$0.00</span></div>
-                                    <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
-                                </div>
-
-                                <form id="checkout-form" class="checkout-form" novalidate>
-                                    <fieldset>
-                                        <legend>Contact & Pickup</legend>
-                                        <label for="customer-name">Name</label>
-                                        <input id="customer-name" name="name" type="text" required placeholder="Full name">
-
-                                        <label for="customer-phone">Phone</label>
-                                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212">
-
-                                        <label for="order-type">Order type</label>
-                                        <select id="order-type" name="type">
-                                            <option value="pickup">Pickup</option>
-                                            <option value="delivery">Delivery</option>
-                                        </select>
-                                    </fieldset>
-
-                                    <button id="place-order" class="button" type="submit">Place Order</button>
-                                </form>
-
-                                <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
-                            </aside>
+                            <!-- Cart / Checkout panel is now presented as a slide-in drawer overlay. The drawer markup
+                                 is included near the end of the document so it can be toggled site-wide by the header cart
+                                 button without changing existing IDs used by the JS. -->
+                            <!-- (Drawer markup removed from this column to keep products area full width on smaller screens) -->
                         </div>
                     </div>
                 </div>
@@ -183,6 +148,49 @@
 
             <p class="footer__copy">&#169; 2025 The Bear Trap. All rights reserved</p>
         </footer>
+
+        <!-- Cart Drawer Overlay (site-wide) -->
+        <div id="cart-overlay" class="cart-overlay" aria-hidden="true">
+            <div class="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
+                <button id="cart-close" class="cart-close" aria-label="Close cart"><i class='bx bx-x'></i></button>
+
+                <div class="cart__header">
+                    <h3>Your Order</h3>
+                    <button id="clear-cart" class="button">Clear</button>
+                </div>
+
+                <div id="cart-items" class="cart__items" aria-live="polite">
+                    <p class="muted">Your cart is empty</p>
+                </div>
+
+                <div class="cart__totals">
+                    <div class="cart__row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
+                    <div class="cart__row"><span>Tax (6%)</span><span id="cart-tax">$0.00</span></div>
+                    <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
+                </div>
+
+                <form id="checkout-form" class="checkout-form" novalidate>
+                    <fieldset>
+                        <legend>Contact & Pickup</legend>
+                        <label for="customer-name">Name</label>
+                        <input id="customer-name" name="name" type="text" required placeholder="Full name">
+
+                        <label for="customer-phone">Phone</label>
+                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212">
+
+                        <label for="order-type">Order type</label>
+                        <select id="order-type" name="type">
+                            <option value="pickup">Pickup</option>
+                            <option value="delivery">Delivery</option>
+                        </select>
+                    </fieldset>
+
+                    <button id="place-order" class="button" type="submit">Place Order</button>
+                </form>
+
+                <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
+            </div>
+        </div>
 
         <!--========== SCROLL REVEAL ==========-->
         <script src="https://unpkg.com/scrollreveal"></script>

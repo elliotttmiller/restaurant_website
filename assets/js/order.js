@@ -185,18 +185,54 @@
     }, 2500);
   }
 
-  // Cart button behaviour: scroll to cart panel (on this page) and give it focus
+  // Cart button behaviour: toggle the site-wide cart drawer overlay
   function wireCartButton(){
     if(!cartButton) return;
+
+    const overlay = document.getElementById('cart-overlay');
+    const cartClose = () => {
+      if(!overlay) return;
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      // return focus to cart button for accessibility
+      if(cartButton) cartButton.focus();
+    };
+
+    const openCart = () => {
+      if(!overlay) return;
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      // focus first interactive element inside drawer
+      const focusable = overlay.querySelector('input, button, [tabindex]');
+      if(focusable) focusable.focus();
+    };
+
     cartButton.addEventListener('click', (e) => {
-      // Prevent the default anchor navigation so we can smoothly scroll to the cart panel
       if (e && typeof e.preventDefault === 'function') e.preventDefault();
-      const cartPanel = document.querySelector('.cart-panel');
-      if(cartPanel){
-        cartPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // focus first input if any
-        const focusable = cartPanel.querySelector('input, button, [tabindex]');
-        if(focusable) focusable.focus();
+      const overlayEl = document.getElementById('cart-overlay');
+      if(!overlayEl) return;
+      if(overlayEl.classList.contains('open')){
+        cartClose();
+      } else {
+        openCart();
+      }
+    });
+
+    // close button + overlay click to close
+    document.addEventListener('click', (e) => {
+      const overlayEl = document.getElementById('cart-overlay');
+      if(!overlayEl) return;
+      const closeBtn = document.getElementById('cart-close');
+      if(closeBtn && e.target === closeBtn) { cartClose(); }
+      // if click outside drawer (on overlay background), close
+      if(e.target === overlayEl) cartClose();
+    });
+
+    // close on Escape
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape'){
+        const overlayEl = document.getElementById('cart-overlay');
+        if(overlayEl && overlayEl.classList.contains('open')) cartClose();
       }
     });
   }
