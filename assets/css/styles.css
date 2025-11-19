@@ -17,6 +17,10 @@
   --text-color-light: #666; /* Medium gray */
   --body-color: #fff; /* White background */
   --container-color: #f5f5f5; /* Light gray container */
+  /* Divider color used for vertical separators in the menu grid. Black on
+    the default light theme so dividers are visible; overridden in
+    dark-theme to a light/white value. */
+  --divider-color: #000;
 
   /*========== Font and typography ==========*/
   --body-font: 'Merriweather', serif;
@@ -81,6 +85,8 @@ body.dark-theme{
   --container-color: #181818; /* Dark container */
   --logo-glow: 0 12px 32px rgba(255,255,255,0.06);
   --logo-accent-glow: rgba(255,255,255,0.045);
+  /* Light divider for dark theme menus */
+  --divider-color: rgba(255,255,255,0.22);
 }
 
 /*========== Button Dark/Light ==========*/
@@ -1162,14 +1168,14 @@ header {
 }
 .section-header h3 {
   font-family: 'Oswald', sans-serif;
-  /* menu titles set to white for high contrast on dark menu panel */
-  color: #ffffff;
+  /* use theme-aware title color so menu headings invert with the theme */
+  color: var(--title-color);
   font-size: 2.1rem;
   font-weight: 700;
   text-transform: uppercase;
   /* identical white lines above and below the title */
-  border-top: 3px solid #ffffff;
-  border-bottom: 3px solid #ffffff;
+  border-top: 3px solid var(--title-color);
+  border-bottom: 3px solid var(--title-color);
   display: inline-block;
   margin: 0;
   /* small vertical padding to give the lines breathing room */
@@ -1183,8 +1189,8 @@ header {
   font-family: "Times New Roman", Times, serif;
   font-style: italic;
   font-size: 0.95rem;
-  /* lighter grey to keep descriptions readable but de-emphasized */
-  color: rgba(255,255,255,0.65);
+  /* use theme-aware lighter text color for de-emphasis */
+  color: var(--text-color-light);
   margin-top: 4px; /* reduced to tighten spacing under the logo */
   margin-bottom: 18px;
   padding: 0 10px;
@@ -1205,8 +1211,8 @@ header {
   width: 100%;
   font-family: 'Oswald', sans-serif;
   font-size: 1.05rem;
-  /* item names and prices should be white for contrast */
-  color: #ffffff;
+  /* theme-aware color so items invert with the theme */
+  color: var(--title-color);
   gap: 8px; /* consistent spacing between name/dots/price */
   min-height: 34px; /* stabilizes row height across items */
 }
@@ -1235,8 +1241,8 @@ header {
   font-family: "Times New Roman", Times, serif;
   font-size: 0.95rem;
   font-style: italic;
-  /* description text slightly lighter than item names */
-  color: rgba(255,255,255,0.62);
+  /* theme-aware description color */
+  color: var(--text-color);
   margin-top: 1px;
   max-width: 800px;
   margin-left: auto;
@@ -1278,11 +1284,11 @@ header {
   }
   .grid-3-col > div:nth-child(1), 
   .grid-3-col > div:nth-child(2) {
-    border-right: 1px solid rgba(255,255,255,0.22); /* stronger white divider */
+    border-right: 1px solid var(--divider-color); /* theme-aware divider */
     padding-right: 18px; /* create breathing room from the divider */
   }
   .grid-2-col > div:nth-child(1) {
-    border-right: 1px solid rgba(255,255,255,0.22); /* stronger white divider */
+    border-right: 1px solid var(--divider-color); /* theme-aware divider */
     padding-right: 18px;
   }
 }
@@ -1298,7 +1304,7 @@ header {
 .pizza-col {
   flex: 1;
   text-align: center;
-  border-right: 1px solid #888;
+  border-right: 1px solid var(--divider-color);
   padding: 0 5px;
   display: flex;
   flex-direction: column;
@@ -1312,30 +1318,29 @@ header {
   text-transform: uppercase; 
   display: block; 
   font-size: 1rem;
-  color: #ffffff;
+  color: var(--title-color);
 }
 .pizza-desc { 
   font-family: "Times New Roman", Times, serif;
   font-style: italic; 
   font-size: 0.9rem; 
-  color: rgba(255,255,255,0.62);
+  color: var(--text-color);
 }
 
 /* --- SPECIALS LIST --- */
-.specials-list {
-  text-align: center;
-  list-style: none;
-  padding: 0;
+.specials__list li{
+  font-size: 0.95rem;
+  color: var(--title-color);
+  padding: 0.35rem 0.5rem;
+  position: relative;
+  line-height: 1.5;
+  background: transparent;
+  border-radius: 0;
+  border-left: none;
+  transition: none;
+  font-weight: 300;
 }
-.specials-list li {
-  margin-bottom: 10px;
-  font-family: 'Oswald', sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-}
+
 
 /* --- EXTRAS & WARNINGS --- */
 .extra-sauces {
@@ -1344,7 +1349,7 @@ header {
   font-style: italic;
   font-size: 0.9rem;
   margin-top: 20px;
-  color: rgba(255,255,255,0.62);
+  color: var(--text-color);
 }
 
 .warning-box {
@@ -1382,12 +1387,14 @@ header {
     grid-template-columns: 1fr 1fr 1fr;
     column-gap: 44px; /* match print spacing */
     row-gap: 8px;
-    align-items: start;
+    /* stretch columns to the same height so vertical dividers match */
+    align-items: stretch;
   }
   .grid-2-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 44px;
+    align-items: stretch;
   }
 
   /* Column padding and vertical rhythm for printed-menu look */
@@ -1503,7 +1510,7 @@ header {
   .grid-3-col > div:nth-child(2) {
     padding-right: 22px;
     /* reinforce divider color here as well for consistency */
-    border-right: 1px solid rgba(255,255,255,0.22);
+    border-right: 1px solid var(--divider-color);
   }
 }
 
@@ -1521,7 +1528,7 @@ header {
     transform: translateX(18px); /* tweak this value to nudge more/less */
   }
   .section-header + .grid-2-col > div:nth-child(1) {
-    border-right: 1px solid rgba(255,255,255,0.22);
+    border-right: 1px solid var(--divider-color);
     padding-right: 18px;
   }
   .section-header + .grid-2-col > div:nth-child(2) {
@@ -1535,7 +1542,7 @@ header {
   }
   .section-header + .grid-3-col > div:nth-child(1),
   .section-header + .grid-3-col > div:nth-child(2) {
-    border-right: 1px solid rgba(255,255,255,0.22);
+    border-right: 1px solid var(--divider-color);
     padding-right: 18px;
   }
 }
@@ -1609,7 +1616,7 @@ header {
 .section-block.center-divider .grid-2-col > div:nth-child(1) {
   /* For two-column sections we only want a single middle divider (right side
      of the left column). Ensure the right column does not render a divider. */
-  border-right: 1px solid rgba(255,255,255,0.22);
+  border-right: 1px solid var(--divider-color);
 }
 .section-block.center-divider .grid-2-col > div:nth-child(2) {
   border-right: none;
@@ -1618,7 +1625,7 @@ header {
 .section-block.center-divider .grid-3-col > div:nth-child(2) {
   /* For three-column sections (appetizers) keep both dividers visible but
      the entire grid is shifted right by the same amount so the gap remains */
-  border-right: 1px solid rgba(255,255,255,0.22);
+  border-right: 1px solid var(--divider-color);
 }
 
 /* Slightly larger nudge for appetizers to visually match the printed layout */

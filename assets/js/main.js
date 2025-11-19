@@ -105,6 +105,16 @@ const updateHeaderLogo = () => {
         headerLogo.src = 'assets/img/bear-trap-header-light.svg'
     }
 }
+    // Function to update menu logo based on theme (menu page only)
+    const updateMenuLogo = () => {
+        const menuLogo = document.querySelector('.menu-logo')
+        if (!menuLogo) return
+        if (document.body.classList.contains(darkTheme)) {
+            menuLogo.src = 'assets/img/menu-logo-dark.svg'
+        } else {
+            menuLogo.src = 'assets/img/menu-logo-light.svg'
+        }
+    }
 
 // Function to update footer logo based on theme
 const updateFooterLogo = () => {
@@ -127,6 +137,7 @@ const toggleTheme = () => {
     localStorage.setItem('selected-icon', getCurrentIcon())
     updateHeaderLogo()
     updateFooterLogo()
+        updateMenuLogo()
 }
 
 // We validate if the user previously chose a topic
@@ -137,6 +148,7 @@ if (selectedTheme) {
   if(themeButtonMobile) themeButtonMobile.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
   updateHeaderLogo()
   updateFooterLogo()
+    updateMenuLogo()
 }
 
 // Activate / deactivate the theme manually with the button (desktop)
