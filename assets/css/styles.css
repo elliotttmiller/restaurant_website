@@ -262,6 +262,13 @@ body.dark-theme{
 
 /* checkout form inputs - modern styles */
 .checkout-form fieldset{ border: none; padding: 0; margin: 0 0 1rem 0 }
+.checkout-form fieldset legend{
+  display:block;
+  margin-bottom: .85rem; /* increase gap between legend and first field */
+  font-weight:700;
+  color: var(--title-color);
+  padding-top: .25rem;
+}
 .checkout-form label{ display:block; margin-bottom: .35rem; font-weight:600; color: var(--title-color) }
 .checkout-form input[type="text"],
 .checkout-form input[type="tel"],
