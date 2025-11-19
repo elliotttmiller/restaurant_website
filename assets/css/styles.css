@@ -1808,6 +1808,42 @@ body.dark-theme .button:hover{
   color: var(--text-color-light);
 }
 
+/* Tighten spacing between the section helper line and the Order Online title
+   when the helper is placed beneath the H2 in the products header. This
+   keeps the helper text visually close without affecting other sections. */
+.products__header .section-description{
+  /* tightened spacing so the helper text sits tightly under the H2 */
+  margin: 0.06rem 0 0.18rem 0;
+  font-size: .95rem;
+  color: var(--text-color-light);
+  font-weight: 400;
+}
+
+/* Slightly nudge the Order Online H2 left for tighter visual centering.
+   Use margin (not transform) so it isn't affected by the order-page reset.
+   Reset on small screens to keep the stacked, centered layout. */
+.products__Header .order-category,
+.products__header .order-category{
+  display: inline-block;
+  margin-left: -1.5rem; /* increased left nudge (moved further left) */
+  text-align: left;
+}
+
+@media screen and (max-width: 768px){
+  .products__header .order-category{ display: block; margin-left: 0; text-align: center; }
+}
+
+/* Shift product title & description slightly to the right so their
+   horizontal position lines up visually with the Order Online header
+   without altering markup or layout of controls. Revert on small screens. */
+.order-page .product-name,
+.order-page .product-desc{
+  /* use margin instead of transform (order-page disables transforms globally) */
+  margin-left: 1.6rem;
+  /* ensure the text inside the title/desc isn't centered by the card container */
+  text-align: left;
+}
+
 .order-page .product-foot{
   /* place controls at the bottom-right corner like the menu button */
   position: absolute;
@@ -1870,6 +1906,10 @@ body.dark-theme .button:hover{
   .order-page .product-card{ padding: .6rem; min-height: auto; align-items: flex-start; }
   .order-page .product-foot{ position: static; transform: none; width: auto; align-items: flex-end; margin-top: .25rem; right: auto; }
   .order-page .product-foot .button{ width: auto !important; height: auto !important; padding: .32rem .6rem !important; border-radius: .4rem !important; font-size: .9rem !important; }
+  .order-page .product-name,
+  .order-page .product-desc{ margin-left: 0; }
+  .order-page .product-name,
+  .order-page .product-desc{ text-align: center; }
 }
 
 
@@ -2289,6 +2329,15 @@ body.dark-theme .services__img {
   }
 }
 
+/* Slightly extend the right edge of the order outline on wider screens so
+   the panel appears a touch wider to the right without affecting centered layout.
+   This only nudges the right edge and is intentionally small. */
+@media screen and (min-width: 960px) {
+  .order-page__content{
+    margin-right: -1.25rem; /* nudge right edge outward */
+  }
+}
+
 /*========== MEDIA QUERIES ==========*/
 @media screen and (min-width: 576px){
   .home__container,
@@ -2478,11 +2527,12 @@ body.dark-theme .services__img {
 .about-page__container,
 .contact-page__container {
   /* Allow page section containers to be wider so inner components (menu, outlines) can expand */
-  max-width: min(1320px, 96%);
+  /* tighten max-width and give symmetric inner padding so the outline panel visually centers
+     more precisely on large and medium viewports */
+  max-width: min(1200px, 92%);
   margin: 0 auto;
-  /* Remove top padding here so the global page padding (from .bd-container/home) controls
-     the spacing beneath the fixed header and avoids double-padding compared to home. */
-  padding: 0 1rem 4rem;
+  /* increase horizontal padding to balance left/right spacing visually */
+  padding: 0 2.5rem 4rem;
   text-align: center;
 }
 
