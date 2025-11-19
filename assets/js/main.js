@@ -5,9 +5,25 @@ const showMenu = (toggleId, navMobileId) =>{
     
     // Validate that variables exist
     if(toggle && navMobile){
+        // ensure toggle is keyboard accessible
+        toggle.setAttribute('role','button')
+        toggle.setAttribute('aria-controls', navMobileId)
+        toggle.setAttribute('aria-expanded', 'false')
+
         toggle.addEventListener('click', ()=>{
             // Toggle the show-menu class on mobile menu
+            const opening = !navMobile.classList.contains('show-menu')
             navMobile.classList.toggle('show-menu')
+            toggle.setAttribute('aria-expanded', opening ? 'true' : 'false')
+
+            if(opening){
+                // focus the first link inside the mobile nav for keyboard users
+                const first = navMobile.querySelector('a, button, [tabindex]')
+                if(first && typeof first.focus === 'function') first.focus()
+            } else {
+                // return focus to the toggle for accessibility
+                if(typeof toggle.focus === 'function') toggle.focus()
+            }
         })
     }
 }
@@ -21,6 +37,9 @@ function linkAction(){
     // When we click on each nav__link, we remove the show-menu class
     if(navMenuMobile){
         navMenuMobile.classList.remove('show-menu')
+        // update aria-expanded on toggle button if present
+        const toggle = document.getElementById('nav-toggle')
+        if(toggle) toggle.setAttribute('aria-expanded', 'false')
     }
 }
 navLink.forEach(n => n.addEventListener('click', linkAction))
