@@ -502,16 +502,21 @@ img{
 }
 
 @media screen and (max-width: 768px){
-  /* Increase header height on small screens to give logo and header icons more breathing room */
-  :root{ --header-height: 6rem; }
+  /* Increase header height on small screens to give logo and header icons more breathing room
+     Use a slightly larger header so tall logo glyphs aren't clipped; logo img height is computed
+     from the header height so it always fits without overflow. */
+  :root{ --header-height: 7.5rem; }
 
   .nav{
     --nav-side-gap: 1rem;
     padding: 0 var(--nav-side-gap);
   }
 
+  /* Make the logo fit inside the header by sizing it relative to the header height */
   .nav__logo-center img{
-    height: 96px; /* slightly larger to use the added header space */
+    /* Slightly reduce logo size on mobile so header icons have more breathing room */
+    height: calc(var(--header-height) - 36px);
+    max-height: 86px;
   }
 
   /* Hide desktop menus on mobile */
@@ -600,21 +605,36 @@ img{
 
   /* Make the hamburger (three-line) icon the same tappable size as the cart
     icon and increase spacing between them for easier tapping on mobile. */
-  .nav__toggle,
+  /* Keep the hamburger a larger tappable target, but slightly reduce the cart
+    icon so it visually matches the three-line icon glyph size while keeping
+    comfortable touch targets. */
+  .nav__toggle{
+  font-size: 1.6rem; /* visual size for the hamburger */
+  width: 52px; /* tappable target */
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 102;
+  }
+
   .cart-button{
-   font-size: 1.6rem; /* match visual size */
-   width: 44px; /* ensure adequate touch target */
-   height: 44px;
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
-   border-radius: 8px;
-   z-index: 102;
+  /* slightly smaller than the hamburger so the visual glyphs read the same
+    size while retaining a decent hit area for touch */
+  font-size: 1.35rem;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  z-index: 102;
   }
 
   /* push cart a bit further left so there's a comfortable gap */
-  .cart-button{ right: 3.4rem; }
-  .nav__toggle{ right: 0.4rem; }
+  .cart-button{ right: 4.6rem; }
+  .nav__toggle{ right: 0.6rem; }
 }
 
 .nav__item{
