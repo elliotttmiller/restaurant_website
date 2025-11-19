@@ -547,6 +547,27 @@ img{
     z-index: var(--z-fixed);
   }
 
+  /* Remove the rounded/pill outline specifically for the first (Menu) link only */
+  .nav__menu--mobile .nav__list li:first-child .nav__link{
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding-left: .25rem !important;
+    padding-right: .25rem !important;
+  }
+
+  /* Also defensively remove any focus/outline/tap highlight for the Menu link */
+  .nav__menu--mobile .nav__list li:first-child .nav__link,
+  .nav__menu--mobile .nav__list li:first-child .nav__link:focus,
+  .nav__menu--mobile .nav__list li:first-child .nav__link:focus-visible,
+  .nav__menu--mobile .nav__list li:first-child .nav__link:active{
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
   .nav__menu--mobile .nav__list{
     display: flex;
     flex-direction: column;
