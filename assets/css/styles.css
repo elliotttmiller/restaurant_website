@@ -2350,7 +2350,8 @@ body.dark-theme .services__img {
   gap: 3.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  /* Reduced bottom padding for a tighter, perfectly-padded footer */
+  padding: 2rem 1.5rem 1rem 1.5rem;
 }
 
 /* Increase spacing specifically between the Address column (3rd) and
@@ -2454,7 +2455,8 @@ body.dark-theme .services__img {
   text-align: center;
   font-size: var(--small-font-size);
   color: var(--text-color-light);
-  margin-top: 2.5rem;
+  /* tighten the top gap above the copyright line */
+  margin-top: 1rem;
   width: 100%;
   display: block;
   position: relative;
@@ -2857,6 +2859,95 @@ body.dark-theme .services__img {
   color: var(--first-color);
   font-weight: 700;
   font-size: 1.3rem;
+}
+
+/* ==========================
+   About page visual polish
+   ========================== */
+.about-page__container {
+  /* slightly wider container for the about page to improve copy flow */
+  max-width: min(1400px, 96%);
+  padding-top: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+.about-page__content {
+  /* increase card width, padding and vertical spacing to read like a feature card */
+  max-width: 1100px;
+  margin: 2.25rem auto 0;
+  padding: 3.25rem 2.5rem;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: block;
+}
+
+.about-page__content .lead{
+  font-size: 1.125rem;
+  line-height: 1.9;
+  color: var(--text-color);
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.about-feature{
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.about-category{
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--title-color);
+}
+
+.about-bullets{
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem auto 0;
+  max-width: 820px;
+}
+
+.about-bullets li{
+  margin-bottom: 0.85rem;
+  font-size: 1rem;
+  color: var(--text-color);
+  line-height: 1.6;
+  text-align: left;
+  padding-left: 1.25rem;
+}
+
+.about-bullets li strong{ color: var(--first-color); font-weight:700; }
+
+.about-page__content .closing{
+  margin-top: 1.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: center;
+  color: var(--title-color);
+}
+
+@media screen and (min-width: 992px){
+  .about-page__content{
+    padding: 4rem 3.5rem;
+  }
+  .about-feature{ text-align: left; }
+  .about-bullets{ margin-left: 2rem; }
+}
+
+@media screen and (max-width: 768px){
+  .about-page__content{ padding: 2rem 1.25rem; border-radius: 16px; }
+  .about-bullets li{ text-align: left; }
+  .about-page__container{ padding-left: 0.75rem; padding-right: 0.75rem; }
+}
+
+/* Revert About page typography to the site's default body font for consistency */
+.about-page__container .section-title,
+.about-page__content,
+.about-page__content .lead,
+.about-page__content .about-category {
+  font-family: var(--body-font);
 }
 
 /*========== CONTACT PAGE ==========*/
