@@ -129,6 +129,25 @@ body.dark-theme{
   background: transparent;
 }
 
+/* small numeric badge on the header cart icon */
+.cart-button .cart-badge{
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--first-color);
+  color: var(--body-color);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .cart-button:hover{
   transform: translateY(-50%) scale(1.06);
   color: var(--title-color);

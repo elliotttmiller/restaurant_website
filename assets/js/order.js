@@ -219,6 +219,28 @@
     if(cartSubtotal) cartSubtotal.textContent = formatMoney(totals.subtotal);
     if(cartTax) cartTax.textContent = formatMoney(totals.tax);
     if(cartTotal) cartTotal.textContent = formatMoney(totals.total);
+
+    // update header cart badge
+    updateCartBadge();
+  }
+
+  // update the small numeric badge on the header cart button
+  function updateCartBadge(){
+    if(!cartButton) return;
+    const totalQty = Object.values(cart).reduce((s,i) => s + (i.qty || 0), 0);
+    // find existing badge
+    let badge = cartButton.querySelector('.cart-badge');
+    if(totalQty > 0){
+      if(!badge){
+        badge = document.createElement('span');
+        badge.className = 'cart-badge';
+        badge.setAttribute('aria-hidden', 'false');
+        cartButton.appendChild(badge);
+      }
+      badge.textContent = String(totalQty);
+    } else {
+      if(badge) badge.remove();
+    }
   }
 
   // Small helpers
