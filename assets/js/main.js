@@ -144,3 +144,19 @@ sr.reveal(`.home__data, .home__img,
             .footer__content`, {
     interval: 200
 })
+
+/*==================== CLICKABLE SPECIALS ICONS ====================*/
+const specialsLinks = document.querySelectorAll('.specials__link');
+
+specialsLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        const url = link.getAttribute('data-url');
+        if (url) {
+            if (url.startsWith('tel:')) {
+                window.location.href = url;
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+    });
+});

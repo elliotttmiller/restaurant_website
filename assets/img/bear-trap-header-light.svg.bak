@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 2048 584" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" version="1.1">
-<!-- Footer - light background: black logo -->
-<g transform="translate(1024,292) scale(1.2) translate(-1024,-292)">
-	<g transform="translate(0,154)">
+<!-- Header - light background: black logo (backup) -->
+<g transform="translate(0,154)">
 	<path transform="translate(804,61)" d="m0 0h28l17 3 15 6 13 9 8 9 6 11 1 3v14l-2 9-9 12-9 9-5 2 5 5 10 7 7 8 2 5 1 12-2 10-7 10-9 8-16 8-13 4-15 2h-39l-3-1 1-14v-94l-1-14-1-4 5-2h29l1 5-2 7-1 10v23l14-3 14-7 10-10 3-7v-11l-5-10-7-6-11-5-4-1h-32l-16 4-14 7-8 7-4 9v13l4 8 10 9-1 3-16 7-6 2h-8l-12-23-2-6v-17l6-12 8-9 13-9 12-6 18-6zm19 102-5 3v39l1 2h15l12-4 9-6 7-8v-11l-7-8-10-5-7-2z" fill="#000000"/>
 	<path transform="translate(1315,61)" d="m0 0h30l26 3 40 6h24l13-5 4 1 7 16 2 6-6 2-10 1h-37l-25-3-12-2v115l1 17 1 8-1 1h-30l-2-1 1-85 1-40v-18l-1-1h-19l-16 3-11 4-7 5-2 4v10l1 7-1 1h-32v-8l3-12 5-10 10-10 14-8 16-5z" fill="#000000"/>
 	<path transform="translate(363,61)" d="m0 0h25l29 3 39 6h24l10-4h7l6 12 3 10-6 2-11 1h-34l-39-5 1 105 1 35-8 1h-23l1-114v-30l-1-1h-15l-17 2-14 5-7 5-2 4v8l1 8-1 2h-30l-3-1 1-9 4-12 4-8 10-10 14-8 16-5z" fill="#000000"/>
@@ -14,6 +13,5 @@
 	<path transform="translate(1627,103)" d="m0 0h35l14 2 15 5 12 7 8 8 5 10 1 4v15l-3 10-9 10-8 6-8 4-19 5-19 3 2 34-1 1h-30v-81l-1-34-2-5v-3zm25 19-1 1-1 9v34l1 4h13l14-5 10-9 3-7-1-8-4-6-7-6-12-5-8-2z" fill="#000000"/>
 	<path transform="translate(1540,103)" d="m0 0h40l1 15 12 35 12 30 6 11 1 1v6h-34l-2-19-27-3-5-1-3 19-4 4-24 1-5-1 1-7 11-26 17-45 2-8v-11zm17 42-3 7v7h11l1-4-3-8-1-2z" fill="#000000"/>
 	<path transform="translate(1050,103)" d="m0 0h31l3 1 1 13 9 25 14 37 8 16 2 5-1 1h-32l-2-4-2-15-18-2h-13l-5 19-2 2h-30l1-7 6-13 15-40 7-19 3-18zm13 41-3 5-2 8 1 2h10l1-7-3-7z" fill="#000000"/>
-	</g>
 </g>
 </svg>
