@@ -1,10 +1,68 @@
 // Simple Order page script: render products, manage cart, persist to localStorage
 (function(){
+  // Full PRODUCTS list derived from the printed menu (appetizers, burgers, chicken/seafood, sandwiches, pizza, salad bar)
   const PRODUCTS = [
-    { id: 'b1', name: 'Bear Trap Burger', desc: '8oz Angus patty, lettuce, tomato, special sauce', price: 11.95 },
-    { id: 'f1', name: 'Fried Cauliflower or Mushrooms', desc: 'Lightly battered, served with ranch', price: 8.50 },
-    { id: 'c1', name: 'Classic Caesar Salad', desc: 'Romaine, parmesan, house caesar', price: 7.25 },
-    { id: 'b2', name: 'Basket of Fries', desc: 'Crispy seasoned fries', price: 4.50 }
+    // APPETIZERS
+    { id: 'app-cowboy', name: 'Cowboy Bites', desc: 'Corn, bacon, cheese and jalapenos inside', price: 8.50 },
+    { id: 'app-hamcheese', name: 'Ham & Cheese Balls', desc: '', price: 8.50 },
+    { id: 'app-friedveg', name: 'Fried Cauliflower or Mushrooms', desc: 'Served with cheese sauce', price: 8.50 },
+    { id: 'app-mozz', name: 'Mozzarella Sticks', desc: 'Served with marinara', price: 8.50 },
+    { id: 'app-seasonedfries', name: 'Seasoned Fries', desc: '', price: 6.00 },
+    { id: 'app-fries-tots', name: 'French Fries or Tater Tots', desc: '', price: 5.00 },
+    { id: 'app-firecracker', name: 'Firecracker Shrimp', desc: 'Redhook Ale beer-battered shrimp rolled in red sweet chili sauce', price: 8.50 },
+    { id: 'app-pizzabites', name: 'Pepperoni Pizza Bites', desc: 'Served with marinara', price: 8.00 },
+    { id: 'app-curds', name: 'Cheese Curds', desc: 'Served with marinara', price: 8.50 },
+    { id: 'app-friedpickles', name: 'Fried Pickles', desc: '', price: 8.50 },
+    { id: 'app-minicorndogs', name: 'Mini Corndogs', desc: '', price: 8.50 },
+    { id: 'app-eggrolls', name: 'Southwestern Egg Rolls', desc: 'Three large egg rolls served with Ranch', price: 9.00 },
+    { id: 'app-onionpetals', name: 'Onion Petals', desc: '', price: 8.50 },
+    { id: 'app-pretzel', name: 'Cheese Stuffed Pretzel', desc: 'Served with marinara or nacho cheese', price: 6.00 },
+    { id: 'app-special', name: 'Appetizer Special', desc: 'Ask your server about our appetizer special of the month', price: 0.00 },
+
+    // BURGER BASKETS
+    { id: 'bur-bare', name: 'Bare Bear', desc: 'Plain hamburger on a bun. Includes choice of fries, tots or coleslaw', price: 10.50 },
+    { id: 'bur-cheesy', name: 'Cheesy Bear', desc: 'Choice of cheese (American, Pepperjack or Swiss). Includes side', price: 11.00 },
+    { id: 'bur-baconcheesy', name: 'Bacon Cheesy Bear', desc: "We've added bacon to our cheeseburger. Includes side", price: 12.00 },
+    { id: 'bur-mushroomswiss', name: 'Mushroom & Swiss Bear', desc: 'Swiss cheese and seasoned mushrooms. Includes side', price: 12.50 },
+    { id: 'bur-california', name: 'California Bear', desc: 'Lettuce, tomato, onion and mayo side. Add cheese $.50. Includes side', price: 13.00 },
+    { id: 'bur-hula', name: 'Hula Bear', desc: 'Teriyaki sauce, swiss cheese, bacon & grilled pineapple. Includes side', price: 14.00 },
+    { id: 'bur-ole', name: 'Ole Bear', desc: 'Topped with homemade bleu cheese dressing and bacon. Includes side', price: 14.00 },
+    { id: 'bur-brisket', name: 'Brisket Burger Bear', desc: 'Sliced brisket, cheddar & sautéed onions. Includes side', price: 14.00 },
+    { id: 'bur-western', name: 'Western Bacon Bear', desc: 'American cheese, BBQ sauce, bacon and onion petals. Includes side', price: 13.00 },
+    { id: 'bur-spicy', name: 'Spicy Bear', desc: "Nacho cheese, jalapeno peppers and drizzled with Frank's wing sauce. Includes side", price: 12.50 },
+
+    // CHICKEN & SEAFOOD
+    { id: 'sea-shrimp', name: 'Shrimp', desc: 'Eight large shrimp fried to a golden brown served with tartar and/or cocktail sauce; includes side', price: 13.50 },
+    { id: 'sea-sunfish', name: 'Sunfish', desc: 'Three sunfish fillets served with tartar sauce and a side of your choice', price: 14.50 },
+    { id: 'sea-surfnsurf', name: 'Surf & Surf', desc: 'Two cod fillets plus four breaded shrimp; served with coleslaw and sauces', price: 13.50 },
+    { id: 'sea-gizzards', name: 'Chicken Gizzards', desc: 'A half pound of golden fried chicken gizzards', price: 12.50 },
+    { id: 'sea-boneless', name: 'Boneless Wings', desc: "Rolled in BBQ, Frank's wing sauce or teriyaki or on the side.", price: 12.50 },
+    { id: 'sea-popcorn', name: 'Popcorn Chicken', desc: 'A generous portion served with your favorite sauce for dipping', price: 11.50 },
+    { id: 'sea-strips', name: 'Chicken Strips', desc: '3-4 chicken strips (depending on size)', price: 12.50 },
+    { id: 'sea-drummies', name: 'Chicken Drummies', desc: 'Five large chicken drummies', price: 13.00 },
+
+    // SANDWICHES
+    { id: 'snd-fish', name: 'Fish Sandwich', desc: 'Large battered haddock fillet served on hoagie with lettuce & tomato. Add cheese $.50', price: 14.50 },
+    { id: 'snd-chicken', name: 'Chicken Sandwich', desc: 'Breaded or grilled chicken on toasted ciabatta with lettuce & tomato', price: 13.50 },
+    { id: 'snd-spicychicken', name: 'Spicy Chicken Sandwich', desc: "Dredged in Frank's Hot Sauce topped with pepper jack, lettuce & tomato", price: 14.50 },
+    { id: 'snd-chk-honey-bacon-swiss', name: 'Chicken, Honey Mustard, Bacon & Swiss', desc: 'Breaded or grilled chicken topped with swiss, bacon & honey mustard', price: 15.00 },
+    { id: 'snd-cordon', name: 'Chicken Cordon Blue', desc: 'Topped with ham & swiss on toasted ciabatta', price: 14.50 },
+    { id: 'snd-hula-grilled', name: 'Hula Grilled Chicken', desc: 'Grilled chicken with Swiss, bacon & pineapple drizzled with teriyaki', price: 14.50 },
+    { id: 'snd-frenchdip', name: 'French Dip', desc: 'Sliced roast beef & swiss on hoagie with au jus', price: 14.00 },
+    { id: 'snd-philly', name: 'Philly Cheesesteak', desc: 'Shredded roast beef, swiss, sautéed onions & peppers on hoagie', price: 14.50 },
+    { id: 'snd-steak', name: 'Steak Sandwich', desc: 'Grilled steak with sautéed onions & mushrooms on ciabatta', price: 14.50 },
+    { id: 'snd-porky', name: 'Porky Bear (Pork Tenderloin)', desc: '7oz breaded pork tenderloin with pickles & onion', price: 13.00 },
+    { id: 'snd-brisket', name: 'BBQ Brisket Sandwich', desc: 'Sliced beef brisket, cheddar, BBQ sauce & sautéed onions', price: 15.00 },
+
+    // SALAD BAR
+    { id: 'sal-saladbar', name: 'Salad Bar', desc: 'Unlimited trips to our salad bar (Tue-Sat 4:30pm-8:00pm)', price: 13.00 },
+
+    // JIMMY'S PIZZA (all pizzas same price)
+    { id: 'piz-meatlovers', name: "Meat Lovers Pizza", desc: 'Sausage, Pepperoni, Beef & Canadian Bacon', price: 13.00 },
+    { id: 'piz-chickenbaconranch', name: "Chicken Bacon Ranch Pizza", desc: '', price: 13.00 },
+    { id: 'piz-cheese', name: 'Cheese Pizza', desc: '', price: 13.00 },
+    { id: 'piz-pepperoni', name: 'Pepperoni Pizza', desc: '', price: 13.00 },
+    { id: 'piz-deluxe', name: 'Deluxe Pizza', desc: 'Pepperoni, Sausage, Mushrooms, Onion and Green Peppers', price: 13.00 }
   ];
 
   const STORAGE_KEY = 'bt_cart_v1';
@@ -35,7 +93,7 @@
         <p class="product-desc">${escapeHtml(p.desc)}</p>
         <div class="product-foot">
           <span class="product-price">${formatMoney(p.price)}</span>
-          <button class="button add-to-cart" data-id="${p.id}">Add</button>
+          <button class="button add-to-cart" data-id="${p.id}" aria-label="Add ${escapeHtml(p.name)} to cart"><i class='bx bx-cart-alt'></i></button>
         </div>
       `;
       productsList.appendChild(card);
@@ -73,7 +131,8 @@
     if(!productId) return;
     const prod = PRODUCTS.find(p => p.id === productId);
     if(!prod) return;
-    if(!cart[productId]) cart[productId] = { ...prod, qty: 0 };
+    // store a minimal item shape in the cart (do not include full description)
+    if(!cart[productId]) cart[productId] = { id: prod.id, name: prod.name, price: prod.price, qty: 0 };
     cart[productId].qty += qty;
     saveCart();
     renderCart();
@@ -125,18 +184,17 @@
       items.forEach(item => {
         const row = document.createElement('div');
         row.className = 'cart-item';
+        // description intentionally omitted in cart items
+        const descHtml = item.desc ? `<div class="cart-item-desc muted">${escapeHtml(item.desc)}</div>` : '';
+        // layout: [ name | qty | price ] with a small top-right remove icon
         row.innerHTML = `
           <div class="cart-item-left">
             <div class="cart-item-name">${escapeHtml(item.name)}</div>
-            <div class="cart-item-desc muted">${escapeHtml(item.desc)}</div>
+            ${descHtml}
           </div>
-          <div class="cart-item-right">
-            <div class="cart-item-controls">
-              <input class="cart-qty" type="number" min="1" value="${item.qty}" data-id="${item.id}" aria-label="Quantity for ${escapeHtml(item.name)}">
-              <button class="button cart-remove" data-id="${item.id}">Remove</button>
-            </div>
-            <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
-          </div>
+          <input class="cart-qty" type="number" min="1" value="${item.qty}" data-id="${item.id}" aria-label="Quantity for ${escapeHtml(item.name)}">
+          <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
+          <button class="cart-remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}"><i class='bx bx-x'></i></button>
         `;
         list.appendChild(row);
       });
