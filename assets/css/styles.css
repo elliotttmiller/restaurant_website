@@ -2353,6 +2353,14 @@ body.dark-theme .services__img {
   padding: 2rem 1.5rem 1.5rem 1.5rem;
 }
 
+/* Increase spacing specifically between the Address column (3rd) and
+   Hours column (4th) for better visual separation on wider screens. */
+@media screen and (min-width: 769px) {
+  .footer__container .footer__content:nth-child(4) {
+    margin-left: 1.25rem; /* extra breathing room between address and hours */
+  }
+}
+
 .footer__content{
   display: flex;
   flex-direction: column;
