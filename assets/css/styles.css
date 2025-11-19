@@ -488,6 +488,16 @@ img{
   align-items: center;
 }
 
+/* Apply the same top padding used on the homepage to other top-level page containers
+   so pages have consistent vertical spacing beneath the fixed header. This targets
+   bd-container elements inside the main area but explicitly excludes the
+   homepage's `.home__container` to avoid double application. */
+.l-main .bd-container:not(.home__container) {
+  padding: 9rem 1rem 4rem;
+  min-height: calc(100vh - var(--header-height));
+  align-content: start;
+}
+
 .home__data{
   max-width: 1400px;
   margin: 0 auto;
@@ -2036,7 +2046,9 @@ body.dark-theme .services__img {
   /* Allow page section containers to be wider so inner components (menu, outlines) can expand */
   max-width: min(1320px, 96%);
   margin: 0 auto;
-  padding: 6rem 1rem 4rem;
+  /* Remove top padding here so the global page padding (from .bd-container/home) controls
+     the spacing beneath the fixed header and avoids double-padding compared to home. */
+  padding: 0 1rem 4rem;
   text-align: center;
 }
 
@@ -2249,7 +2261,9 @@ body.dark-theme .services__img {
   .order-page__container,
   .about-page__container,
   .contact-page__container {
-    padding: 4rem 1rem 3rem;
+    /* keep top padding controlled by the outer bd-container while allowing
+       reduced interior padding on small screens */
+    padding: 0 1rem 3rem;
   }
 
   .menu-page__content,
@@ -2273,7 +2287,7 @@ body.dark-theme .services__img {
   .order-page__container,
   .about-page__container,
   .contact-page__container {
-    padding: 3rem 0.75rem 2rem;
+    padding: 0 0.75rem 2rem;
   }
 
   .section-description {
