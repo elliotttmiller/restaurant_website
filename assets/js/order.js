@@ -613,12 +613,19 @@
       }
     }
     
-    // Create a unique cart ID with customizations
-    const customHash = JSON.stringify(customizations);
-    const cartId = `${productId}_${Date.now()}`;
+    // Create a unique cart ID with timestamp and random suffix to avoid collisions
+    const cartId = `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Build description of customizations
+    // Build description of customizations with proper formatting
     let customDesc = [];
+    const categoryNames = {
+      'bread': 'Bread',
+      'cheese': 'Cheese',
+      'toppings': 'Toppings',
+      'sauces': 'Sauces',
+      'sides': 'Side'
+    };
+    
     for(const category in customizations){
       if(options[category]){
         const labels = customizations[category].map(val => {
@@ -626,7 +633,8 @@
           return item ? item.label : val;
         }).filter(Boolean);
         if(labels.length > 0){
-          customDesc.push(`${category}: ${labels.join(', ')}`);
+          const catName = categoryNames[category] || category;
+          customDesc.push(`${catName}: ${labels.join(', ')}`);
         }
       }
     }
