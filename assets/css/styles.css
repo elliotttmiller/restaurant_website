@@ -1968,13 +1968,13 @@ body.dark-theme .button:hover{
    - Mobile: revert to stacked flow for accessible tap targets */
 .order-page .product-card{
   position: relative; /* allow absolute controls */
-  /* add right padding equal to the controls area so content never overlaps */
-  padding: 0.8rem 6rem 1.4rem 0.85rem; /* extra bottom padding so bottom-right controls fit */
+  /* Symmetric padding so text is truly centered */
+  padding: 0.8rem 6rem 1.4rem 6rem; /* equal left/right padding for perfect centering */
   gap: 0.32rem;
   min-height: 92px; /* slightly taller so price/button fit comfortably */
   display: flex;
   align-items: center; /* vertically center the text block */
-  justify-content: flex-start;
+  justify-content: center; /* center the content horizontally */
 }
 
 .order-page .product-name{
@@ -2044,6 +2044,13 @@ body.dark-theme .button:hover{
   /* add top padding so section headings feel vertically balanced
      (matches the visual weight of the bottom gap) */
   padding-top: 0.6rem;
+}
+
+/* Ensure section notes on order page are centered and properly spaced */
+.order-section .section-note{
+  text-align: center;
+  margin: 0.4rem auto 0.8rem auto;
+  max-width: 90%;
 }
 
 .products-list-section{
@@ -2893,6 +2900,7 @@ body.dark-theme .services__img {
   color: var(--text-color);
   margin-bottom: 3rem;
   opacity: 0.9;
+  text-align: center;
 }
 
 .menu-page__content,
