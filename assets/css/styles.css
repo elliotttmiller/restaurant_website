@@ -1287,11 +1287,11 @@ header {
   .grid-3-col > div:nth-child(1), 
   .grid-3-col > div:nth-child(2) {
     border-right: 1px solid var(--divider-color); /* theme-aware divider */
-    padding-right: 18px; /* create breathing room from the divider */
+    padding-right: 24px; /* increased breathing room from the divider */
   }
   .grid-2-col > div:nth-child(1) {
     border-right: 1px solid var(--divider-color); /* theme-aware divider */
-    padding-right: 18px;
+    padding-right: 24px; /* increased breathing room */
   }
 }
 
@@ -1387,7 +1387,7 @@ header {
   .grid-3-col {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    column-gap: 44px; /* match print spacing */
+    column-gap: 48px; /* increased for better breathing room */
     row-gap: 8px;
     /* stretch columns to the same height so vertical dividers match */
     align-items: stretch;
@@ -1395,74 +1395,25 @@ header {
   .grid-2-col {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    column-gap: 44px;
+    column-gap: 48px; /* match 3-col gap */
     align-items: stretch;
   }
 
   /* Column padding and vertical rhythm for printed-menu look */
   .col-content {
-    gap: 14px;
-    padding: 0 18px; /* room between column edge and content */
+    gap: 16px; /* slightly increased for better spacing */
+    padding: 0 20px; /* increased padding for better divider spacing */
+    min-height: 100%; /* ensure columns stretch to match */
   }
 
-  /* Each menu item: center the title horizontally, keep description centered, and anchor price to the right */
+  /* Each menu item: proper grid layout for perfect alignment */
   .menu-item {
     text-align: center;
-    padding: 8px 0;
-  }
-
-  /* Use a two-column grid for the item top: centered name on the left column
-     and a right-anchored price in the second column. This is more robust than
-     absolute positioning and ensures name/price alignment even when the name
-     wraps to two lines. */
-  .item-top {
-    display: grid;
-    grid-template-columns: 1fr auto; /* flexible name column + auto-sized price */
-    justify-items: center; /* center the name horizontally within its column */
-    align-items: center;   /* vertically center both name and price */
-    gap: 12px;
-    min-height: 44px; /* slightly taller to accommodate two-line names */
-  }
-
-  .item-name {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: center; /* center the title above details */
-    display: block;
-    /* Remove fragile translate-based nudging; grid alignment keeps price
-       and title vertically aligned. If micro-nudging is still needed we can
-       reintroduce a small translate, but prefer avoiding absolute offsets. */
-    transform: none;
-    width: 100%;
-    white-space: normal; /* allow wrapping */
-    margin: 0; /* reset side margin when centered */
-  }
-
-  /* Hide dot leader when centering names */
-  .item-dots { display: none; }
-
-  .item-price {
-    font-weight: 700;
-    white-space: nowrap;
-    /* Use grid placement rather than absolute positioning so the price always
-       stays aligned with the title. */
-    position: static;
-     left: clamp(0.75rem, 2vw, 1.5rem);
-     right: auto;
-    align-self: center;
-    margin-left: 8px;
-  }
-
-  /* Make the entire menu item a grid so the description can align under the name
-     column (first column) rather than spanning the full width. This keeps the
-     description visually centered below the title even when the price sits in
-     the right column. */
-  .menu-item {
+    padding: 10px 0; /* increased for better spacing */
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: start;
-    gap: 6px 12px; /* row-gap, column-gap */
+    gap: 8px 16px; /* row-gap, column-gap - increased for clarity */
   }
 
   /* Treat the top row wrapper as a transparent container so its children
@@ -1475,31 +1426,42 @@ header {
   .item-name {
     grid-column: 1 / 2;
     justify-self: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    width: 100%;
+    white-space: normal; /* allow wrapping */
+    margin: 0;
+    align-self: center; /* vertically center with price */
   }
 
   .item-price {
     grid-column: 2 / 3;
     justify-self: end;
+    align-self: center; /* vertically center with name */
+    font-weight: 700;
+    white-space: nowrap;
+    position: static;
+    margin-left: 0;
   }
+
+  /* Hide dot leader when centering names */
+  .item-dots { display: none; }
 
   .item-desc {
     grid-column: 1 / 2; /* keep description under the title column */
     justify-self: center;
-    margin-top: 4px;
-    max-width: 90%;
-  }
-
-  /* Keep descriptions centered beneath the item as in the print menu */
-  .item-desc {
     text-align: center;
-    padding: 0 6px;
-    margin-top: 4px;
+    padding: 0 8px;
+    margin-top: 6px; /* consistent spacing */
+    max-width: 95%;
   }
 
   /* Tighten description spacing for items with single-line titles only.
      The small JS snippet adds .single-line or .two-line to each .menu-item. */
   .menu-item.single-line .item-desc {
-    margin-top: 2px; /* tighter spacing when title is a single line */
+    margin-top: 4px; /* tighter spacing when title is a single line */
   }
 
   /* For clarity, ensure two-line items keep a slightly larger gap */
@@ -1507,11 +1469,16 @@ header {
     margin-top: 8px;
   }
 
-  /* Ensure vertical divider breathing room */
+  /* Ensure vertical divider breathing room and proper alignment */
   .grid-3-col > div:nth-child(1),
   .grid-3-col > div:nth-child(2) {
-    padding-right: 22px;
+    padding-right: 24px; /* increased for better spacing */
     /* reinforce divider color here as well for consistency */
+    border-right: 1px solid var(--divider-color);
+  }
+  
+  .grid-2-col > div:nth-child(1) {
+    padding-right: 24px;
     border-right: 1px solid var(--divider-color);
   }
 }
@@ -3415,4 +3382,238 @@ body.dark-theme .services__img {
   -webkit-transition: none !important;
   animation: none !important;
   pointer-events: none; /* make it non-interactive so hover styles elsewhere won't affect it */
+}
+
+/* ===== CUSTOMIZATION MODAL STYLES ===== */
+.customize-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.customize-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.customize-modal {
+  background: var(--body-color);
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.customize-modal-overlay.open .customize-modal {
+  transform: scale(1);
+}
+
+.customize-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.customize-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--title-color);
+  font-weight: 700;
+}
+
+.customize-close {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text-color);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.customize-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.customize-body {
+  padding: 1.5rem;
+}
+
+.customize-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.customize-section {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.customize-section legend {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--title-color);
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.customize-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.customize-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.customize-option:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--first-color);
+}
+
+.customize-option input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.customize-option .option-label {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.customize-option .option-price {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--first-color);
+}
+
+.customize-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.customize-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.customize-price span {
+  font-size: 0.9rem;
+  color: var(--text-color-light);
+}
+
+.customize-price strong {
+  font-size: 1.5rem;
+  color: var(--title-color);
+  font-weight: 700;
+}
+
+.customize-footer .button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: var(--first-color);
+  color: var(--body-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.customize-footer .button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark theme adjustments for modal */
+body.dark-theme .customize-modal {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .customize-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .customize-option {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+body.dark-theme .customize-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--first-color);
+}
+
+body.dark-theme .customize-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-theme .customize-close:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 768px) {
+  .customize-modal {
+    max-height: 95vh;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .customize-header {
+    padding: 1rem;
+  }
+  
+  .customize-body {
+    padding: 1rem;
+  }
+  
+  .customize-footer {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .customize-footer .button {
+    width: 100%;
+  }
 }

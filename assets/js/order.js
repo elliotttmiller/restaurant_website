@@ -1,6 +1,7 @@
 // Simple Order page script: render products, manage cart, persist to localStorage
 (function(){
   // Full PRODUCTS list derived from the printed menu (appetizers, burgers, chicken/seafood, sandwiches, pizza, salad bar)
+  // Products with customizable: true will show a "Customize" button that opens a modal
   const PRODUCTS = [
     // APPETIZERS
     { id: 'app-cowboy', name: 'Cowboy Bites', desc: 'Corn, bacon, cheese and jalapenos inside', price: 8.50 },
@@ -19,17 +20,17 @@
     { id: 'app-pretzel', name: 'Cheese Stuffed Pretzel', desc: 'Served with marinara or nacho cheese', price: 6.00 },
     { id: 'app-special', name: 'Appetizer Special', desc: 'Ask your server about our appetizer special of the month', price: 0.00 },
 
-    // BURGER BASKETS
-    { id: 'bur-bare', name: 'Bare Bear', desc: 'Plain hamburger on a bun. Includes choice of fries, tots or coleslaw', price: 10.50 },
-    { id: 'bur-cheesy', name: 'Cheesy Bear', desc: 'Choice of cheese (American, Pepperjack or Swiss). Includes side', price: 11.00 },
-    { id: 'bur-baconcheesy', name: 'Bacon Cheesy Bear', desc: "We've added bacon to our cheeseburger. Includes side", price: 12.00 },
-    { id: 'bur-mushroomswiss', name: 'Mushroom & Swiss Bear', desc: 'Swiss cheese and seasoned mushrooms. Includes side', price: 12.50 },
-    { id: 'bur-california', name: 'California Bear', desc: 'Lettuce, tomato, onion and mayo side. Add cheese $.50. Includes side', price: 13.00 },
-    { id: 'bur-hula', name: 'Hula Bear', desc: 'Teriyaki sauce, swiss cheese, bacon & grilled pineapple. Includes side', price: 14.00 },
-    { id: 'bur-ole', name: 'Ole Bear', desc: 'Topped with homemade bleu cheese dressing and bacon. Includes side', price: 14.00 },
-    { id: 'bur-brisket', name: 'Brisket Burger Bear', desc: 'Sliced brisket, cheddar & sautéed onions. Includes side', price: 14.00 },
-    { id: 'bur-western', name: 'Western Bacon Bear', desc: 'American cheese, BBQ sauce, bacon and onion petals. Includes side', price: 13.00 },
-    { id: 'bur-spicy', name: 'Spicy Bear', desc: "Nacho cheese, jalapeno peppers and drizzled with Frank's wing sauce. Includes side", price: 12.50 },
+    // BURGER BASKETS (customizable)
+    { id: 'bur-bare', name: 'Bare Bear', desc: 'Plain hamburger on a bun. Includes choice of fries, tots or coleslaw', price: 10.50, customizable: true },
+    { id: 'bur-cheesy', name: 'Cheesy Bear', desc: 'Choice of cheese (American, Pepperjack or Swiss). Includes side', price: 11.00, customizable: true },
+    { id: 'bur-baconcheesy', name: 'Bacon Cheesy Bear', desc: "We've added bacon to our cheeseburger. Includes side", price: 12.00, customizable: true },
+    { id: 'bur-mushroomswiss', name: 'Mushroom & Swiss Bear', desc: 'Swiss cheese and seasoned mushrooms. Includes side', price: 12.50, customizable: true },
+    { id: 'bur-california', name: 'California Bear', desc: 'Lettuce, tomato, onion and mayo side. Add cheese $.50. Includes side', price: 13.00, customizable: true },
+    { id: 'bur-hula', name: 'Hula Bear', desc: 'Teriyaki sauce, swiss cheese, bacon & grilled pineapple. Includes side', price: 14.00, customizable: true },
+    { id: 'bur-ole', name: 'Ole Bear', desc: 'Topped with homemade bleu cheese dressing and bacon. Includes side', price: 14.00, customizable: true },
+    { id: 'bur-brisket', name: 'Brisket Burger Bear', desc: 'Sliced brisket, cheddar & sautéed onions. Includes side', price: 14.00, customizable: true },
+    { id: 'bur-western', name: 'Western Bacon Bear', desc: 'American cheese, BBQ sauce, bacon and onion petals. Includes side', price: 13.00, customizable: true },
+    { id: 'bur-spicy', name: 'Spicy Bear', desc: "Nacho cheese, jalapeno peppers and drizzled with Frank's wing sauce. Includes side", price: 12.50, customizable: true },
 
     // CHICKEN & SEAFOOD
     { id: 'sea-shrimp', name: 'Shrimp', desc: 'Eight large shrimp fried to a golden brown served with tartar and/or cocktail sauce; includes side', price: 13.50 },
@@ -41,18 +42,18 @@
     { id: 'sea-strips', name: 'Chicken Strips', desc: '3-4 chicken strips (depending on size)', price: 12.50 },
     { id: 'sea-drummies', name: 'Chicken Drummies', desc: 'Five large chicken drummies', price: 13.00 },
 
-    // SANDWICHES
-    { id: 'snd-fish', name: 'Fish Sandwich', desc: 'Large battered haddock fillet served on hoagie with lettuce & tomato. Add cheese $.50', price: 14.50 },
-    { id: 'snd-chicken', name: 'Chicken Sandwich', desc: 'Breaded or grilled chicken on toasted ciabatta with lettuce & tomato', price: 13.50 },
-    { id: 'snd-spicychicken', name: 'Spicy Chicken Sandwich', desc: "Dredged in Frank's Hot Sauce topped with pepper jack, lettuce & tomato", price: 14.50 },
-    { id: 'snd-chk-honey-bacon-swiss', name: 'Chicken, Honey Mustard, Bacon & Swiss', desc: 'Breaded or grilled chicken topped with swiss, bacon & honey mustard', price: 15.00 },
-    { id: 'snd-cordon', name: 'Chicken Cordon Blue', desc: 'Topped with ham & swiss on toasted ciabatta', price: 14.50 },
-    { id: 'snd-hula-grilled', name: 'Hula Grilled Chicken', desc: 'Grilled chicken with Swiss, bacon & pineapple drizzled with teriyaki', price: 14.50 },
-    { id: 'snd-frenchdip', name: 'French Dip', desc: 'Sliced roast beef & swiss on hoagie with au jus', price: 14.00 },
-    { id: 'snd-philly', name: 'Philly Cheesesteak', desc: 'Shredded roast beef, swiss, sautéed onions & peppers on hoagie', price: 14.50 },
-    { id: 'snd-steak', name: 'Steak Sandwich', desc: 'Grilled steak with sautéed onions & mushrooms on ciabatta', price: 14.50 },
-    { id: 'snd-porky', name: 'Porky Bear (Pork Tenderloin)', desc: '7oz breaded pork tenderloin with pickles & onion', price: 13.00 },
-    { id: 'snd-brisket', name: 'BBQ Brisket Sandwich', desc: 'Sliced beef brisket, cheddar, BBQ sauce & sautéed onions', price: 15.00 },
+    // SANDWICHES (customizable)
+    { id: 'snd-fish', name: 'Fish Sandwich', desc: 'Large battered haddock fillet served on hoagie with lettuce & tomato. Add cheese $.50', price: 14.50, customizable: true },
+    { id: 'snd-chicken', name: 'Chicken Sandwich', desc: 'Breaded or grilled chicken on toasted ciabatta with lettuce & tomato', price: 13.50, customizable: true },
+    { id: 'snd-spicychicken', name: 'Spicy Chicken Sandwich', desc: "Dredged in Frank's Hot Sauce topped with pepper jack, lettuce & tomato", price: 14.50, customizable: true },
+    { id: 'snd-chk-honey-bacon-swiss', name: 'Chicken, Honey Mustard, Bacon & Swiss', desc: 'Breaded or grilled chicken topped with swiss, bacon & honey mustard', price: 15.00, customizable: true },
+    { id: 'snd-cordon', name: 'Chicken Cordon Blue', desc: 'Topped with ham & swiss on toasted ciabatta', price: 14.50, customizable: true },
+    { id: 'snd-hula-grilled', name: 'Hula Grilled Chicken', desc: 'Grilled chicken with Swiss, bacon & pineapple drizzled with teriyaki', price: 14.50, customizable: true },
+    { id: 'snd-frenchdip', name: 'French Dip', desc: 'Sliced roast beef & swiss on hoagie with au jus', price: 14.00, customizable: true },
+    { id: 'snd-philly', name: 'Philly Cheesesteak', desc: 'Shredded roast beef, swiss, sautéed onions & peppers on hoagie', price: 14.50, customizable: true },
+    { id: 'snd-steak', name: 'Steak Sandwich', desc: 'Grilled steak with sautéed onions & mushrooms on ciabatta', price: 14.50, customizable: true },
+    { id: 'snd-porky', name: 'Porky Bear (Pork Tenderloin)', desc: '7oz breaded pork tenderloin with pickles & onion', price: 13.00, customizable: true },
+    { id: 'snd-brisket', name: 'BBQ Brisket Sandwich', desc: 'Sliced beef brisket, cheddar, BBQ sauce & sautéed onions', price: 15.00, customizable: true },
 
     // SALAD BAR
     { id: 'sal-saladbar', name: 'Salad Bar', desc: 'Unlimited trips to our salad bar (Tue-Sat 4:30pm-8:00pm)', price: 13.00 },
@@ -64,6 +65,77 @@
     { id: 'piz-pepperoni', name: 'Pepperoni Pizza', desc: '', price: 13.00 },
     { id: 'piz-deluxe', name: 'Deluxe Pizza', desc: 'Pepperoni, Sausage, Mushrooms, Onion and Green Peppers', price: 13.00 }
   ];
+
+  // Customization options for burgers and sandwiches
+  const CUSTOMIZATION_OPTIONS = {
+    burger: {
+      cheese: [
+        { id: 'no-cheese', label: 'No Cheese', price: 0 },
+        { id: 'american', label: 'American Cheese', price: 0 },
+        { id: 'pepperjack', label: 'Pepper Jack Cheese', price: 0 },
+        { id: 'swiss', label: 'Swiss Cheese', price: 0 },
+        { id: 'cheddar', label: 'Cheddar Cheese', price: 0 }
+      ],
+      toppings: [
+        { id: 'lettuce', label: 'Lettuce', price: 0 },
+        { id: 'tomato', label: 'Tomato', price: 0 },
+        { id: 'onion', label: 'Onion', price: 0 },
+        { id: 'pickles', label: 'Pickles', price: 0 },
+        { id: 'bacon', label: 'Add Bacon', price: 1.50 },
+        { id: 'mushrooms', label: 'Add Mushrooms', price: 1.00 },
+        { id: 'jalapenos', label: 'Add Jalapeños', price: 0.50 }
+      ],
+      sauces: [
+        { id: 'ketchup', label: 'Ketchup', price: 0 },
+        { id: 'mustard', label: 'Mustard', price: 0 },
+        { id: 'mayo', label: 'Mayo', price: 0 },
+        { id: 'bbq', label: 'BBQ Sauce', price: 0 },
+        { id: 'ranch', label: 'Ranch', price: 0 }
+      ],
+      sides: [
+        { id: 'fries', label: 'French Fries', price: 0 },
+        { id: 'tots', label: 'Tater Tots', price: 0 },
+        { id: 'coleslaw', label: 'Coleslaw', price: 0 },
+        { id: 'seasoned-fries', label: 'Seasoned Fries', price: 1.00 },
+        { id: 'sweet-potato', label: 'Sweet Potato Fries', price: 2.00 },
+        { id: 'onion-petals', label: 'Onion Petals', price: 2.00 }
+      ]
+    },
+    sandwich: {
+      bread: [
+        { id: 'hoagie', label: 'Hoagie Bun', price: 0 },
+        { id: 'ciabatta', label: 'Ciabatta', price: 0 },
+        { id: 'wheat', label: 'Wheat Bread', price: 0 }
+      ],
+      cheese: [
+        { id: 'no-cheese', label: 'No Cheese', price: 0 },
+        { id: 'american', label: 'American Cheese', price: 0.50 },
+        { id: 'pepperjack', label: 'Pepper Jack Cheese', price: 0.50 },
+        { id: 'swiss', label: 'Swiss Cheese', price: 0.50 },
+        { id: 'cheddar', label: 'Cheddar Cheese', price: 0.50 }
+      ],
+      toppings: [
+        { id: 'lettuce', label: 'Lettuce', price: 0 },
+        { id: 'tomato', label: 'Tomato', price: 0 },
+        { id: 'onion', label: 'Onion', price: 0 },
+        { id: 'pickles', label: 'Pickles', price: 0 },
+        { id: 'bacon', label: 'Add Bacon', price: 1.50 }
+      ],
+      sauces: [
+        { id: 'mayo', label: 'Mayo', price: 0 },
+        { id: 'mustard', label: 'Mustard', price: 0 },
+        { id: 'ranch', label: 'Ranch', price: 0 },
+        { id: 'honey-mustard', label: 'Honey Mustard', price: 0 }
+      ],
+      sides: [
+        { id: 'fries', label: 'French Fries', price: 0 },
+        { id: 'tots', label: 'Tater Tots', price: 0 },
+        { id: 'coleslaw', label: 'Coleslaw', price: 0 },
+        { id: 'seasoned-fries', label: 'Seasoned Fries', price: 1.00 },
+        { id: 'sweet-potato', label: 'Sweet Potato Fries', price: 2.00 }
+      ]
+    }
+  };
 
   const STORAGE_KEY = 'bt_cart_v1';
 
@@ -149,12 +221,19 @@
       products.forEach(p => {
         const card = document.createElement('article');
         card.className = 'product-card modern-container';
+        
+        // Determine button text and action based on whether item is customizable
+        const buttonText = p.customizable ? 'Customize' : 'Add to Cart';
+        const buttonAction = p.customizable ? 'customize' : 'add';
+        
         card.innerHTML = `
           <h3 class="product-name">${escapeHtml(p.name)}</h3>
           <p class="product-desc">${escapeHtml(p.desc)}</p>
           <div class="product-foot">
             <span class="product-price">${formatMoney(p.price)}</span>
-            <button class="button add-to-cart" data-id="${p.id}" aria-label="Add ${escapeHtml(p.name)} to cart"><i class='bx bx-cart-alt'></i></button>
+            <button class="button ${buttonAction}-btn" data-id="${p.id}" aria-label="${buttonText} ${escapeHtml(p.name)}">
+              <i class='bx ${p.customizable ? 'bx-edit' : 'bx-cart-alt'}'></i>
+            </button>
           </div>
         `;
         listWrap.appendChild(card);
@@ -164,11 +243,17 @@
       productsList.appendChild(sectionEl);
     });
 
-    // Attach listeners to all add buttons inside productsList
-    const addBtns = productsList.querySelectorAll('.add-to-cart');
+    // Attach listeners to all add and customize buttons
+    const addBtns = productsList.querySelectorAll('.add-btn');
     addBtns.forEach(btn => btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id');
       addToCart(id, 1);
+    }));
+    
+    const customizeBtns = productsList.querySelectorAll('.customize-btn');
+    customizeBtns.forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
+      openCustomizationModal(id);
     }));
   }
 
@@ -249,8 +334,8 @@
       items.forEach(item => {
         const row = document.createElement('div');
         row.className = 'cart-item';
-        // description intentionally omitted in cart items
-        const descHtml = item.desc ? `<div class="cart-item-desc muted">${escapeHtml(item.desc)}</div>` : '';
+        // Show customizations if present
+        const descHtml = item.customizations ? `<div class="cart-item-desc muted">${escapeHtml(item.customizations)}</div>` : '';
         // layout: left (name) | right-group (qty + price) with a small top-right remove icon
         row.innerHTML = `
           <div class="cart-item-left">
@@ -380,6 +465,191 @@
         if(overlayEl && overlayEl.classList.contains('open')) cartClose();
       }
     });
+  }
+
+  // Customization modal functions
+  function openCustomizationModal(productId){
+    const prod = PRODUCTS.find(p => p.id === productId);
+    if(!prod || !prod.customizable) return;
+    
+    // Determine customization type (burger or sandwich)
+    const custType = prod.id.startsWith('bur-') ? 'burger' : 'sandwich';
+    const options = CUSTOMIZATION_OPTIONS[custType];
+    
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'customize-modal-overlay';
+    modal.innerHTML = `
+      <div class="customize-modal" role="dialog" aria-modal="true" aria-labelledby="customize-title">
+        <div class="customize-header">
+          <h2 id="customize-title">Customize ${escapeHtml(prod.name)}</h2>
+          <button class="customize-close" aria-label="Close customization"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="customize-body">
+          <form id="customize-form" class="customize-form">
+            ${custType === 'sandwich' ? renderCustomSection('Bread Choice', 'bread', options.bread, 'radio') : ''}
+            ${renderCustomSection('Cheese', 'cheese', options.cheese, 'radio')}
+            ${renderCustomSection('Toppings', 'toppings', options.toppings, 'checkbox')}
+            ${renderCustomSection('Sauces', 'sauces', options.sauces, 'checkbox')}
+            ${renderCustomSection('Side Choice', 'sides', options.sides, 'radio')}
+            
+            <div class="customize-footer">
+              <div class="customize-price">
+                <span>Total:</span>
+                <strong id="customize-total">${formatMoney(prod.price)}</strong>
+              </div>
+              <button type="submit" class="button button-primary">Add to Cart</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Set defaults
+    const form = modal.querySelector('#customize-form');
+    if(custType === 'sandwich'){
+      form.querySelector('input[name="bread"][value="hoagie"]').checked = true;
+    }
+    form.querySelector('input[name="cheese"][value="american"]').checked = true;
+    form.querySelector('input[name="sides"][value="fries"]').checked = true;
+    
+    // Update total when options change
+    const updateTotal = () => {
+      let total = prod.price;
+      const formData = new FormData(form);
+      
+      // Calculate additional costs
+      for(const category in options){
+        const items = options[category];
+        const selected = formData.getAll(category);
+        selected.forEach(val => {
+          const item = items.find(i => i.id === val);
+          if(item) total += item.price;
+        });
+      }
+      
+      modal.querySelector('#customize-total').textContent = formatMoney(total);
+    };
+    
+    form.addEventListener('change', updateTotal);
+    
+    // Handle form submission
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const customizations = {};
+      
+      for(const category in options){
+        customizations[category] = formData.getAll(category);
+      }
+      
+      addCustomizedToCart(productId, customizations);
+      closeCustomizationModal(modal);
+    });
+    
+    // Close button
+    modal.querySelector('.customize-close').addEventListener('click', () => {
+      closeCustomizationModal(modal);
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) closeCustomizationModal(modal);
+    });
+    
+    // Escape to close
+    const escapeHandler = (e) => {
+      if(e.key === 'Escape'){
+        closeCustomizationModal(modal);
+        document.removeEventListener('keydown', escapeHandler);
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Show modal with animation
+    setTimeout(() => modal.classList.add('open'), 10);
+  }
+  
+  function renderCustomSection(title, category, items, inputType){
+    return `
+      <fieldset class="customize-section">
+        <legend>${title}</legend>
+        <div class="customize-options">
+          ${items.map(item => `
+            <label class="customize-option">
+              <input type="${inputType}" name="${category}" value="${item.id}">
+              <span class="option-label">${escapeHtml(item.label)}</span>
+              ${item.price > 0 ? `<span class="option-price">+${formatMoney(item.price)}</span>` : ''}
+            </label>
+          `).join('')}
+        </div>
+      </fieldset>
+    `;
+  }
+  
+  function closeCustomizationModal(modal){
+    modal.classList.remove('open');
+    setTimeout(() => modal.remove(), 300);
+  }
+  
+  function addCustomizedToCart(productId, customizations){
+    const prod = PRODUCTS.find(p => p.id === productId);
+    if(!prod) return;
+    
+    // Calculate total price with customizations
+    let totalPrice = prod.price;
+    const custType = prod.id.startsWith('bur-') ? 'burger' : 'sandwich';
+    const options = CUSTOMIZATION_OPTIONS[custType];
+    
+    for(const category in customizations){
+      const selected = customizations[category];
+      if(options[category]){
+        selected.forEach(val => {
+          const item = options[category].find(i => i.id === val);
+          if(item) totalPrice += item.price;
+        });
+      }
+    }
+    
+    // Create a unique cart ID with timestamp and random suffix to avoid collisions
+    const cartId = `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Build description of customizations with proper formatting
+    let customDesc = [];
+    const categoryNames = {
+      'bread': 'Bread',
+      'cheese': 'Cheese',
+      'toppings': 'Toppings',
+      'sauces': 'Sauces',
+      'sides': 'Side'
+    };
+    
+    for(const category in customizations){
+      if(options[category]){
+        const labels = customizations[category].map(val => {
+          const item = options[category].find(i => i.id === val);
+          return item ? item.label : val;
+        }).filter(Boolean);
+        if(labels.length > 0){
+          const catName = categoryNames[category] || category;
+          customDesc.push(`${catName}: ${labels.join(', ')}`);
+        }
+      }
+    }
+    
+    cart[cartId] = { 
+      id: cartId, 
+      name: prod.name, 
+      price: totalPrice,
+      customizations: customDesc.join(' | '),
+      qty: 1 
+    };
+    
+    saveCart();
+    renderCart();
+    flashCartMessage(`${prod.name} added to cart`);
   }
 
   // Checkout form: for now, do not submit orders to a backend. Show a friendly message and clear cart.
