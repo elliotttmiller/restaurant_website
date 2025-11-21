@@ -2900,6 +2900,7 @@ body.dark-theme .services__img {
   color: var(--text-color);
   margin-bottom: 3rem;
   opacity: 0.9;
+  text-align: center;
 }
 
 .menu-page__content,
