@@ -51,7 +51,6 @@
   /* Logo glow vars (used for subtle hover glow, theme-aware) */
   --logo-glow: 0 12px 30px rgba(0,0,0,0.08);
   --logo-accent-glow: rgba(0,0,0,0.06);
-}
 
 @media screen and (min-width: 768px){
   :root{
@@ -231,33 +230,41 @@ body.dark-theme{
   padding: .9rem 1.6rem .9rem 1rem; /* extra right padding so the top-right X sits comfortably */
   border-radius: 12px;
 }
-.cart-item-left{ flex: 1 1 auto; min-width: 0; max-width: calc(100% - 220px); }
-.cart-item-right{ display: flex; gap: .5rem; align-items: center; flex: 0 0 auto }
+.cart-item-left{ flex: 1 1 auto; min-width: 0; max-width: calc(100% - 180px); }
+.cart-item-right{ display: flex; gap: .25rem; align-items: center; flex: 0 0 auto }
 .cart-item-desc{ margin-top: .25rem; color: var(--text-color-light); font-size: .95rem }
 .cart-item-name{ font-weight: 600; color: var(--title-color) }
-.cart-qty{ width: 72px; flex: 0 0 72px; padding: .45rem .55rem; border-radius: 10px; border:1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.02); color: var(--text-color); font-size: .95rem; text-align:center; margin-right: .25rem }
-.cart-item-price{ width: 100px; flex: 0 0 100px; text-align: right; font-weight: 700 }
+.cart-qty{ width: 64px; flex: 0 0 64px; padding: .36rem .48rem; border-radius: 10px; border:1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.02); color: var(--text-color); font-size: .95rem; text-align:center; margin-right: 4px }
+.cart-item-price{ width: 80px; flex: 0 0 80px; text-align: right; font-weight: 700 }
 
-/* small top-right remove icon button */
+/* Mobile: nudge quantity to the right and tighten spacing in cart drawer */
+@media (max-width: 700px) {
+  .cart-item-left{ max-width: calc(100% - 220px); }
+  .cart-qty{ margin-left: 0.6rem; margin-right: 0.6rem; width: 64px; flex: 0 0 64px; }
+  .cart-item-price{ width: 92px; flex: 0 0 92px; }
+}
+
+@media (max-width: 480px) {
+  /* push qty toward the right so it has visual separation from the name */
+  .cart-qty{ margin-left: auto; margin-right: 0.5rem; width: 64px; flex: 0 0 64px; }
+  .cart-item-left{ max-width: calc(100% - 180px); }
+  .cart-item-price{ width: 88px; flex: 0 0 88px; }
+}
+
+/* remove button as part of the right-hand controls (inline, not absolute) */
 .cart-remove{
-  position: absolute;
-  /* vertically center the X with the qty/price row */
-  top: 50%;
-  transform: translateY(-50%);
-  /* move the X out to the drawer edge (negative offset from the item) so it sits at the very right edge */
-  right: calc(-1.5rem);
-  width: 32px;
-  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
   border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--text-color);
   cursor: pointer;
   font-size: 1rem;
-  z-index: 5;
+  margin-left: 2px;
 }
 .cart-remove:hover{ background: rgba(0,0,0,0.06) }
 .cart-remove i{ font-size: 1.05rem }
@@ -1795,6 +1802,8 @@ body.dark-theme .button:hover{
   font-family: "Times New Roman", Times, serif;
   margin: 0.25rem 0 0.5rem 0;
 }
+/* hide empty product descriptions (useful for kids items where section note covers inclusions) */
+.product-desc:empty{ display:none; }
 /* Ensure product titles and descriptions are centered across the site
    so they match the centered page and section headings. This overrides any
    page-scoped nudges that may have left them left-aligned. */
@@ -1838,12 +1847,270 @@ body.dark-theme .button:hover{
   .order-page .product-foot .button{ padding: .35rem .6rem !important; }
 }
 
+/* ===== Order page top filter/header bar (pickup/delivery, location, timing, category tabs, search) ===== */
+.products__topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:1rem;
+  padding:1.25rem 0 1.75rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.products__topbar .topbar-left{ display:flex; flex-direction:row; align-items:center; gap:1rem }
+.products__topbar .topbar-right{ display:flex; align-items:center; gap:1rem }
+
+.products__topbar .order-type{ display:inline-flex; gap:.4rem; background: transparent; padding:.125rem; border-radius:999px }
+.products__topbar .order-type .order-mode{ background: rgba(255,255,255,0.02); border:1px solid rgba(0,0,0,0.06); padding:.45rem .85rem; border-radius:999px; cursor:pointer; font-weight:600 }
+.products__topbar .order-type .order-mode.active{ background: var(--body-color); color: var(--first-color); box-shadow: 0 6px 14px rgba(0,0,0,0.06) }
+
+.products__topbar .pickup-info{ display:flex; flex-direction:column; gap:.2rem }
+.pickup-location-copy{ color:var(--text-color-light); font-size:.95rem }
+.timing-toggle{ background:transparent; border:1px solid rgba(0,0,0,0.06); padding:.28rem .48rem; border-radius:999px; cursor:pointer; font-weight:600; font-size:.95rem; line-height:1; min-width:48px }
+
+/* inline address + timing when placed on the right */
+.pickup-info-inline{ display:flex; align-items:center; gap:.75rem }
+.pickup-info-inline .pickup-location-copy{ font-weight:600; color:var(--text-color); }
+.pickup-info-inline .timing-toggle{ padding:.45rem .7rem }
+
+/* Pickup badge (subtle, sleek) placed left of the address */
+.pickup-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: .18rem .46rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight:700;
+  color: var(--first-color);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.06);
+  margin-right: .4rem;
+  min-width:42px;
+}
+
+/* Hover/active subtle lift */
+.pickup-badge:hover{ transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.04); }
+
+/* Dark theme adjustments for badge */
+body.dark-theme .pickup-badge{
+  background: rgba(255,255,255,0.04);
+  color: var(--text-color);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Pickup badge (subtle pill to the left of address) */
+.pickup-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.18rem .46rem;
+  border-radius:999px;
+  font-weight:700;
+  font-size:.78rem;
+  color: var(--first-color);
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.06);
+  min-width:42px;
+  text-align:center;
+}
+
+@media screen and (max-width: 900px){
+  .pickup-badge{ font-size:.76rem; padding:.16rem .42rem; min-width:40px }
+}
+
+/* Dark theme pickup badge (final override to ensure visibility) */
+body.dark-theme .pickup-badge{
+  color: var(--text-color);
+  background: rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Timing modal styles */
+.timing-modal-overlay{
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:11000; opacity:0; visibility:hidden; transition: opacity .18s ease, visibility .18s ease; padding:1rem;
+}
+.timing-modal-overlay.open{ opacity:1; visibility:visible }
+.timing-modal{ background: var(--body-color); color:var(--text-color); border-radius:10px; width:100%; max-width:420px; box-shadow:0 18px 60px rgba(0,0,0,0.25); overflow:hidden }
+.timing-header{ display:flex; align-items:center; justify-content:space-between; padding:1rem 1rem; border-bottom:1px solid rgba(0,0,0,0.06) }
+.timing-header h3{ margin:0; font-size:1.05rem }
+.timing-body{ padding:1rem }
+.timing-option{ display:block; padding:.6rem 0; font-weight:600 }
+.schedule-time-row label{ display:block; margin-bottom:.25rem; color:var(--text-color-light) }
+.timing-footer{ display:flex; gap:.75rem; padding:1rem; justify-content:flex-end; border-top:1px solid rgba(0,0,0,0.04) }
+.timing-close{ background:transparent; border:none; font-size:1.2rem; cursor:pointer }
+
+/* Dark theme adjustments for timing controls/modal */
+body.dark-theme .timing-toggle{
+  border:1px solid rgba(255,255,255,0.12);
+  color: var(--text-color);
+  background: rgba(255,255,255,0.04);
+}
+
+body.dark-theme .pickup-info-inline .pickup-location-copy{ color: var(--text-color); }
+
+body.dark-theme .timing-modal{
+  background: #141414;
+  color: var(--text-color);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 18px 60px rgba(255,255,255,0.03);
+}
+body.dark-theme .timing-header{ border-bottom:1px solid rgba(255,255,255,0.06); }
+body.dark-theme .timing-footer{ border-top:1px solid rgba(255,255,255,0.06); }
+
+
+
+.category-tabs{ display:flex; gap:.5rem; align-items:center }
+.category-tabs .tab{ background: transparent; border:none; padding:.5rem .6rem; cursor:pointer; color:var(--text-color); font-weight:600 }
+.category-tabs .tab.active{ border-bottom:3px solid var(--first-color); padding-bottom:.4rem }
+
+/* Mobile category dropdown: hidden on desktop, visible on small screens */
+.category-dropdown{ display:none; position:relative }
+.category-dropdown-toggle{ background: transparent; border:1px solid rgba(0,0,0,0.06); padding:.45rem .7rem; border-radius:999px; cursor:pointer; font-weight:600 }
+.category-dropdown-list{
+  display:none;
+  position:absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(-6px);
+  /* prefer sizing to match the toggle where possible so the panel appears centered under it */
+  width: auto;
+  min-width: 130px;
+  max-width: min(360px, 92vw);
+  max-height: 340px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+  border-radius: 12px;
+  box-shadow: 0 22px 60px rgba(0,0,0,0.6);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  background-color: var(--body-color);
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: .25rem;
+  z-index: 12000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+.category-dropdown.open .category-dropdown-list{
+  display:block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+.category-dropdown-list::-webkit-scrollbar{ display:none; height:0; width:0 }
+.category-dropdown-list .tab{ display:block; width:100%; text-align:left; padding:.6rem .9rem; border-radius:8px; margin:0 0 .25rem 0; color:var(--text-color); background: transparent; transition: background .12s ease, transform .08s ease }
+.category-dropdown-list .tab:hover{ background: rgba(0,0,0,0.06); transform: translateY(-2px) }
+/* make separators subtle */
+.category-dropdown-list .tab + .tab{ border-top: 1px solid rgba(0,0,0,0.04); padding-top:.6rem }
+.category-dropdown.open .category-dropdown-list{ display:block }
+
+/* force the dropdown to center under the toggle's center reliably */
+.category-dropdown{ position:relative; display:inline-flex; }
+.category-dropdown-toggle{ position:relative; }
+
+/* Mobile specifics: hide desktop tabs and show dropdown */
+@media screen and (max-width: 768px){
+  .category-tabs{ display:none }
+  .category-dropdown{ display:block }
+  .products__topbar{ align-items:center }
+}
+
+/* Mobile topbar layout: single horizontal row: pickup | category dropdown (center) | timing */
+@media screen and (max-width: 768px){
+  .products__topbar{ display:flex; align-items:center; gap:.4rem; padding:.6rem 0; }
+  /* pickup-row: address and timing inline, centered */
+  .products__topbar .pickup-row{ display:flex; align-items:center; justify-content:center; gap:.5rem; width:100% }
+  .products__topbar .pickup-row .pickup-info-inline{ display:flex; align-items:center; gap:.5rem; flex:0 1 auto }
+  /* allow address to show on single line where possible but truncate if extremely narrow */
+  .products__topbar .pickup-row .pickup-location-copy{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: calc(100% - 150px) }
+  .products__topbar .topbar-left{ order:2; flex:1 1 auto; display:flex; justify-content:center }
+  .products__topbar .topbar-right{ order:1; display:flex; align-items:center; gap:.4rem }
+  /* allow the address to take available space and wrap if needed so the full address is visible */
+  .products__topbar .pickup-info-inline{ order:1; flex:1 1 auto; white-space:normal }
+  .products__topbar .pickup-info-inline .pickup-location-copy{ max-width: none; overflow:visible; text-overflow:initial; white-space:normal }
+  /* make timing tiny and compact on small screens */
+  .products__topbar .timing-wrap{ order:3; flex:0 0 auto }
+  .products__topbar .timing-wrap .timing-toggle{ padding:.22rem .42rem; font-size:.92rem }
+  /* place category filter and timing side-by-side in a single controls row */
+  .controls-row{ display:flex; align-items:center; justify-content:center; gap:.5rem; flex-wrap:nowrap; width:100% }
+  .controls-row .topbar-left{ display:flex; align-items:center; gap:.5rem; flex:0 1 auto }
+  .controls-row .timing-wrap{ display:flex; align-items:center; flex:0 0 auto }
+  .controls-row{ margin-top:.5rem }
+  /* ensure the dropdown wrapper sizes to the toggle (so centering works) */
+  .category-dropdown{ order:2; max-width:260px; width:auto; display:inline-block; flex:0 0 auto; position:relative }
+  /* make both controls visually identical: same font-size, weight and padding */
+  .category-dropdown-toggle,
+  .timing-toggle{ font-family: var(--nav-font); font-size: .95rem; font-weight:600; padding:.28rem .56rem; border-radius:999px }
+  .category-dropdown-toggle{ width:auto; min-width:130px; text-align:center; display:inline-flex; align-items:center; justify-content:center }
+}
+
+/* Dark theme adjustments */
+body.dark-theme .category-dropdown-toggle{ border:1px solid rgba(255,255,255,0.06); color:var(--text-color); background: rgba(255,255,255,0.02) }
+body.dark-theme .category-dropdown-list{ border:1px solid rgba(255,255,255,0.06); box-shadow: 0 12px 40px rgba(0,0,0,0.6); background: var(--body-color) }
+
+.products-search .search-wrap{ display:flex; gap:.5rem; align-items:center; background: rgba(255,255,255,0.02); border:1px solid rgba(0,0,0,0.06); padding:.35rem .5rem; border-radius:999px }
+.products-search input[type="search"]{ border:none; background:transparent; padding:.35rem .5rem; outline:none; color:var(--text-color); width:200px }
+.products-search .search-clear{ background:transparent; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-color-light) }
+
+@media screen and (max-width: 900px){
+  .products__topbar{ flex-direction:column; align-items:stretch }
+  .products__topbar .topbar-right{ justify-content:space-between }
+  .products-search input[type="search"]{ width:120px }
+}
+
+/* Remove the decorative outline 'container' around the order page for a unified UI */
+.order-page .order-page__content::before{
+  display: none !important;
+  content: none !important;
+}
+.order-page .order-page__content,
+.order-page .order-page__container{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Make products list a two-column grid on wider screens */
+.products__list{ display:block; }
+.products-list-section{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .9rem;
+}
+.products-list-section .product-card{ padding: 1rem; }
+
+@media screen and (max-width: 900px){
+  .products-list-section{ display:flex; flex-direction:column; gap:.6rem }
+}
+
+
 .cart-list{ display:flex; flex-direction:column; gap:10px; }
-.cart-item{ display:flex; align-items:center; gap:.75rem; padding:0.5rem 0; border-bottom:1px dashed rgba(0,0,0,0.06); position: relative }
-.cart-item-left{ flex:1; min-width:0 }
-.cart-item-right{ display:flex; flex-direction:row; align-items:center; gap:.5rem }
-.cart-item-controls{ display:flex; gap:8px; align-items:center; }
-.cart-item-price{ font-weight:700; min-width:80px; text-align:right; }
+
+/* Each cart item is a compact horizontal row: name/desc on the left, controls on the right */
+.cart-item{
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(0,0,0,0.02);
+  padding: .9rem 1rem;
+  border-radius: 12px;
+}
+.cart-item-left{ flex: 1 1 auto; min-width: 0; }
+.cart-item-right{ display: flex; gap: .25rem; align-items: center; flex: 0 0 auto; margin-left: auto }
+.cart-item-controls{ display:flex; gap:6px; align-items:center; }
+.cart-item-price{ font-weight:700; min-width:74px; text-align:right; margin-left:4px }
+
+/* qty wrapper is inline inside the right-side controls so dropdown stays associated
+  with the product and is not absolutely positioned (avoids fragile offsets). */
+.cart-qty-wrap{ position: relative; display: inline-flex; align-items: center; margin-right:4px }
+.cart-qty{ margin: 0; }
+
+/* Kids tag and description in cart */
+.cart-item .kids-tag{ font-size: .82rem; color: var(--first-color-alt); margin-left: 0.35rem; font-weight:600 }
+.cart-item .cart-item-kids{ margin-top: .25rem; color: var(--text-color-light); font-size: .92rem }
 
 .order-message{ min-height:1.5rem; color: var(--first-color); font-weight:600; transition: opacity .25s ease; opacity:0; }
 .order-message.visible{ opacity:1; }
@@ -1959,11 +2226,15 @@ body.dark-theme .button:hover{
    keeps the helper text visually close without affecting other sections. */
 .products__header .section-description{
   /* tightened spacing so the helper text sits tightly under the H2 */
-  margin: 0.06rem 0 0.18rem 0;
+  margin: 0.08rem 0 0.14rem 0;
   font-size: .95rem;
   color: var(--text-color-light);
   font-weight: 400;
 }
+
+/* small centered phone line under the header helper text */
+.products__header .order-phone{ margin: 0.18rem 0 0.35rem 0; text-align: center; color: var(--text-color); font-weight:600 }
+.products__header .order-phone a{ color: inherit; text-decoration: none; }
 
 /* Slightly nudge the Order Online H2 left for tighter visual centering.
    Use margin (not transform) so it isn't affected by the order-page reset.
@@ -1976,6 +2247,9 @@ body.dark-theme .button:hover{
      left-nudge which caused misalignment. */
   margin-left: 0;
   text-align: center;
+  /* tighten vertical rhythm for the main header */
+  margin-bottom: 0.18rem;
+  line-height: 1.1;
 }
 
 @media screen and (max-width: 768px){
@@ -2056,17 +2330,23 @@ body.dark-theme .button:hover{
 
 /* Sleek rounded Add button placed under price */
 .order-page .product-foot .button{
-  /* match menu button format: bottom-right, padded pill with one rounded corner */
-  padding: .625rem .813rem !important; /* same as .menu__button */
-  border-radius: .5rem 0 .5rem 0 !important; /* same corner shape */
-  background: transparent !important;
+  /* sleek labeled button that sits under the price at the bottom-right */
+  padding: .55rem .85rem !important;
+  border-radius: .5rem 0 .5rem 0 !important; /* keep the same corner shape */
+  background: rgba(255,255,255,0.02) !important;
   color: var(--first-color) !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border: none !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
   line-height: 1 !important;
-  font-size: 0 !important; /* hide fallback text */
+  font-size: .92rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .2px !important;
+  text-transform: none !important;
+  min-height: 36px !important;
+  padding-left: .9rem !important;
+  padding-right: .9rem !important;
   transition: background-color .16s ease, color .16s ease, transform .09s ease !important;
 }
 
@@ -2077,13 +2357,23 @@ body.dark-theme .button:hover{
   display: inline-block;
 }
 
+/* label inside the product button */
+.order-page .product-foot .button .btn-label{
+  display: inline-block;
+  color: inherit;
+  font-family: var(--nav-font);
+  font-weight: 600;
+  font-size: .92rem;
+  line-height: 1;
+}
+
 /* hover: fill like menu button (only for this control in order-page) */
 .order-page .product-foot .button:hover,
 .order-page .product-foot .button:focus{
   background-color: var(--first-color) !important;
   color: var(--body-color) !important;
   transform: scale(1.04) !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.06) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
 }
 
 /* Keep order page interactions visually static but ensure focus/active states are usable */
@@ -2091,21 +2381,58 @@ body.dark-theme .button:hover{
 .order-page .product-foot .button:active{ outline: none; }
 
 @media screen and (max-width: 480px){
-  /* On small screens, restore normal flow so controls stack beneath text */
-  .order-page .product-card{ padding: .6rem; min-height: auto; align-items: flex-start; }
-  .order-page .product-foot{ position: static; transform: none; width: auto; align-items: flex-end; margin-top: .25rem; right: auto; }
-  .order-page .product-foot .button{ width: auto !important; height: auto !important; padding: .32rem .6rem !important; border-radius: .4rem !important; font-size: .9rem !important; }
+  /* On small screens, stack controls beneath text and left-align content for readability */
+  .order-page .product-card{
+    padding: .7rem .9rem;
+    min-height: auto;
+    align-items: stretch;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    text-align: left;
+  }
   .order-page .product-name,
   .order-page .product-desc{
-    margin-left: 0;
-    margin-right: 0;
-    /* ensure the title and description block occupy full width and center their text */
+    margin: 0;
     display: block;
     width: 100%;
-    text-align: center;
+    text-align: left;
+    padding-right: 0;
   }
   /* Give the description a slightly tighter top margin for visual balance under the title */
-  .order-page .product-desc{ margin-top: .18rem; }
+  .order-page .product-desc{ margin-top: .18rem; color: var(--text-color-light); }
+  /* Controls flow: stack price then full-width button for easy tapping on phones */
+  .order-page .product-foot{
+    position: static;
+    transform: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    margin-top: .25rem;
+    padding: 0;
+    gap: .35rem;
+  }
+  .order-page .product-price{ text-align: left; font-size: .96rem; margin-bottom: 0 }
+  .order-page .product-foot .button{
+    width: 100% !important;
+    height: auto !important;
+    padding: .5rem .7rem !important;
+    border-radius: .45rem !important;
+    font-size: .95rem !important;
+  }
+}
+
+/* Better mid-size mobile responsiveness (phones up to small tablets) */
+@media screen and (max-width: 768px){
+  .products-list-section{ display:flex; flex-direction:column; gap:.6rem }
+  .products-list-section .product-card{ padding:.7rem .9rem; min-height:auto; align-items:flex-start }
+  .order-page .product-name{ font-size:1.02rem }
+  .order-page .product-desc{ font-size:.9rem }
+  .order-page .product-foot{ width:100%; display:flex; justify-content:space-between; align-items:center; margin-top:.5rem }
+  .order-page .product-foot .button{ padding:.38rem .72rem !important }
 }
 
 
@@ -3491,15 +3818,17 @@ body.dark-theme .services__img {
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .customize-option:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.04));
   border-color: var(--first-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
 }
 
 .customize-option input {
@@ -3581,7 +3910,7 @@ body.dark-theme .customize-option {
 }
 
 body.dark-theme .customize-option:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
   border-color: var(--first-color);
 }
 
@@ -3616,4 +3945,400 @@ body.dark-theme .customize-close:hover {
   .customize-footer .button {
     width: 100%;
   }
+}
+
+/* Modernize customize modal: cleaner header, compact body scroll, hidden scrollbar */
+.customize-modal-overlay{
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+.customize-modal{
+  border: 1px solid rgba(0,0,0,0.06);
+  background: linear-gradient(180deg, var(--body-color), rgba(255,255,255,0.01));
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* we'll let the body scroll */
+}
+
+.customize-header h2{ font-size:1.6rem; letter-spacing:0.2px; margin:0; }
+.customize-close{ font-size:1.2rem; width:44px; height:44px; border-radius:10px }
+.customize-close:hover{ background: rgba(0,0,0,0.06) }
+
+.customize-body{
+  padding: 1rem 1.25rem;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.customize-body::-webkit-scrollbar{ width:0; height:0; }
+
+.customize-option{ background: transparent; border-radius: 10px; padding: 0.8rem; }
+.customize-option .option-label{ font-weight:600 }
+.customize-option input{ width:20px; height:20px }
+
+.customize-footer{ padding: 1rem 1.25rem; gap:0.5rem }
+
+/* subtle focus state for keyboard users */
+.customize-option:focus-within{ outline: 3px solid rgba(0,0,0,0.06); outline-offset: 3px }
+
+/* Dark theme tweaks for new modal visuals */
+body.dark-theme .customize-modal{ border-color: rgba(255,255,255,0.06); background: linear-gradient(180deg, #0f0f0f, rgba(255,255,255,0.01)) }
+body.dark-theme .customize-body::-webkit-scrollbar{ display:none }
+
+
+/* Tighten vertical spacing above the Order Online header on small screens
+   so the gap between the top nav and H2 matches the compact rhythm used
+   around the phone/address lines. */
+@media screen and (max-width: 900px) {
+  /* Reduce the section top padding for the order page specifically */
+  .order-page.section {
+    padding-top: 1.6rem !important; /* was 4rem on desktop; tighten for mobile */
+    padding-bottom: 1rem !important;
+  }
+
+
+/* ============================
+   Quick fix: restore header logo
+   sizing and icon top padding
+   (scoped, non-destructive overrides)
+   ============================ */
+/* Ensure the fixed header nav is tall enough and centers its children */
+.l-header .nav {
+  align-items: center;
+  height: calc(var(--header-height) + 2.25rem);
+}
+
+/* Make the centered logo larger while remaining responsive.
+   Use high-specificity and !important to win over earlier rules
+   without changing upstream variables. */
+.nav__logo-center img {
+  height: auto !important;
+  max-height: 140px !important;
+  width: auto !important;
+  display: block;
+}
+
+@media screen and (min-width: 768px) {
+  /* Desktop/tablet: allow a taller logo and keep icons vertically centered */
+  .l-header .nav { height: calc(var(--header-height) + 1.8rem); }
+  .nav__logo-center img { max-height: 180px !important; }
+  .change-theme, .cart-button, .nav__toggle {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  /* Mobile: slightly reduce logo so it fits comfortably and give icons
+     a small top margin so they don't hug the screen edge. */
+  .nav__logo-center img { max-height: 96px !important; }
+  .change-theme, .cart-button, .nav__toggle { margin-top: 6px; top: auto; transform: none !important; }
+}
+
+/* Slightly reduce the space above the products header itself */
+.products__header{ margin-top: 0.6rem !important; padding-top: 0 !important }
+
+/* Very small phones: make it even tighter to match inline controls spacing */
+@media screen and (max-width: 480px){
+  .order-page.section { padding-top: 1.1rem !important; padding-bottom: 0.8rem !important }
+  .products__header{ margin-top: 0.4rem !important }
+}
+
+/* Cart qty dropdown UI */
+
+/* ============================
+   Order page: clean hover overlay
+   Replace heavy gradient overlays with a subtle, modern sheen
+   Scoped to `.order-page` so desktop/menu pages keep existing visuals
+   ============================ */
+.order-page .product-card:hover,
+.order-page .modern-container:hover,
+.order-page .menu__content:hover {
+  /* subtle single-color overlay instead of a multi-stop gradient */
+  background: rgba(255,255,255,0.02) !important;
+  /* gentle elevation to indicate interactivity without motion */
+  box-shadow: 0 10px 28px rgba(0,0,0,0.28) !important;
+  transform: none !important;
+}
+
+/* Slightly stronger shadow for non-dark theme contexts */
+body:not(.dark-theme) .order-page .product-card:hover,
+body:not(.dark-theme) .order-page .modern-container:hover,
+body:not(.dark-theme) .order-page .menu__content:hover{
+  background: rgba(0,0,0,0.02) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.22) !important;
+}
+
+/* Dark-theme hover: keep it subtle and legible */
+body.dark-theme .order-page .product-card:hover,
+body.dark-theme .order-page .modern-container:hover,
+body.dark-theme .order-page .menu__content:hover{
+  background: rgba(255,255,255,0.02) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6) !important;
+}
+
+.cart-qty-wrap{ position: relative; display: inline-flex; vertical-align: middle; margin-right:4px }
+.cart-qty-btn{
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(0,0,0,0.06);
+  color: var(--text-color);
+  padding: 0.28rem 0.5rem;
+  border-radius: 10px;
+  min-width: 40px;
+  text-align: center;
+  font-weight:600;
+  cursor: pointer;
+}
+.cart-qty-btn:active,
+.cart-qty-btn.pressed{
+  /* subtle pressed state for touch: slightly brighter background + soft inset ring */
+  background: rgba(255,255,255,0.04);
+  box-shadow: inset 0 0 0 6px rgba(255,255,255,0.03);
+}
+.cart-qty-btn:focus{ outline: 3px solid rgba(0,0,0,0.06); outline-offset: 2px }
+.cart-qty-menu{ display: none; position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 8px); background: var(--container-color); color: var(--text-color); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 10px 40px rgba(0,0,0,0.28); border-radius: 10px; padding: 8px 6px; z-index: 14000; min-width: 64px; max-width: 96px; max-height: 260px; overflow:auto }
+.cart-qty-wrap.open .cart-qty-menu{ display: block }
+.cart-qty-option{ display:block; width:100%; padding: .28rem .45rem; text-align:center; background:transparent; border:none; cursor:pointer; font-weight:600; color: var(--text-color) }
+.cart-qty-option:hover{ background: rgba(0,0,0,0.02); }
+
+/* Dark-theme specific tweaks so the qty menu is visible against dark drawer */
+body.dark-theme .cart-qty-menu{
+  /* Use a near-black panel so the dropdown reads as part of the dark drawer */
+  background: rgba(0,0,0,0.92);
+  border-color: rgba(255,255,255,0.03);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.6);
+}
+body.dark-theme .cart-qty-option:hover{ background: rgba(255,255,255,0.08); }
+
+/* make option rows taller and readable on touch */
+.cart-qty-option{ padding: .35rem .6rem; font-size: .98rem; line-height: 1.4; }
+.cart-qty-menu::-webkit-scrollbar{ width:6px; }
+.cart-qty-menu::-webkit-scrollbar-thumb{ background: rgba(0,0,0,0.2); border-radius: 6px }
+
+/* Tighter spacing adjustments for small screens - keep right-side controls fixed width
+   so left area can truncate gracefully. Use the cart-qty-btn (not a legacy .cart-qty)
+   so the dropdown and button remain visible on narrow viewports. */
+@media (max-width: 700px) {
+  .cart-item-left{ max-width: calc(100% - 160px); }
+  .cart-qty-btn{ min-width: 40px; padding: 0.26rem 0.48rem; }
+  .cart-item-price{ min-width: 72px; text-align: right; }
+}
+
+@media (max-width: 480px) {
+  .cart-item-left{ max-width: calc(100% - 140px); margin-right: 0; }
+  .cart-qty-btn{ min-width: 36px; padding: 0.22rem 0.42rem; font-size: 0.94rem; }
+  .cart-item-price{ min-width: 64px; text-align: right; }
+  .cart-remove{ margin-left: 4px; }
+}
+
+/* == Mobile product-card fluid fixes (overrides) == */
+@media (max-width: 768px) {
+  /* Force product cards to use full available width and remove large side padding */
+  .order-page .products-list-section .product-card,
+  .products-list-section .product-card,
+  .order-page .product-card {
+    padding: 0.75rem 1rem !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    box-sizing: border-box;
+    align-items: flex-start;
+    overflow: visible;
+  }
+
+  .product-card .product-name {
+    font-size: 1.02rem;
+    line-height: 1.2;
+    text-align: left;
+  }
+
+  .product-card .product-desc {
+    font-size: 0.88rem;
+    margin-top: 0.25rem;
+    text-align: left;
+    color: var(--text-color-light);
+  }
+
+  /* Footer: price left, button right on larger phones */
+  .product-card .product-foot {
+    position: static;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+
+  .product-card .product-price {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+  }
+
+  .product-card .product-add-button,
+  .product-card .btn-add,
+  .product-card .add-to-cart-btn {
+    flex: 0 0 auto;
+    margin-left: 0.25rem;
+  }
+
+  /* Layout: keep product cards horizontal (meta left, controls right) */
+  .product-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .product-meta {
+    flex: 1 1 auto;
+    min-width: 0; /* allow text to wrap/shrink */
+  }
+
+  .product-foot {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Further compact and stack controls for very small phones */
+  .order-page .products-list-section .product-card,
+  .products-list-section .product-card,
+  .order-page .product-card {
+    padding: 0.6rem 0.75rem !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* Preserve horizontal layout on very small phones but tighten spacing */
+  .product-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .product-card .product-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-end;
+    margin-top: 0;
+  }
+
+  /* Make Add button full width and easier to tap */
+  .product-card .product-add-button,
+  .product-card .btn-add,
+  .product-card .add-to-cart-btn {
+    width: 100% !important;
+    display: inline-block;
+    text-align: center;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+
+  /* Ensure price appears above the button and is left-aligned */
+  .product-card .product-price {
+    text-align: right;
+    margin-bottom: 0;
+    font-weight: 700;
+  }
+
+  /* Prevent unexpected transforms from causing overlap */
+  .product-card * {
+    transform: none !important;
+  }
+}
+
+/* Stronger overrides to pin controls to the right and keep product cards horizontal */
+@media (max-width: 768px) {
+  .order-page .products__list .product-card,
+  .products-list-section .product-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    padding: 0.7rem 1rem !important;
+  }
+
+  .order-page .products__list .product-card .product-meta,
+  .products-list-section .product-card .product-meta {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .order-page .products__list .product-card .product-foot,
+  .products-list-section .product-card .product-foot {
+    margin-left: auto !important; /* push to far right */
+    width: 140px !important;
+    max-width: 34% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+  }
+
+  .order-page .products__list .product-card .product-action-btn,
+  .products-list-section .product-card .product-action-btn {
+    width: auto !important;
+    padding: 0.36rem 0.6rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-page .products__list .product-card .product-foot,
+  .products-list-section .product-card .product-foot {
+    width: 110px !important;
+    max-width: 36% !important;
+  }
+
+  .order-page .products__list .product-card .product-action-btn,
+  .products-list-section .product-card .product-action-btn {
+    padding: 0.34rem 0.5rem !important;
+    font-size: 0.92rem !important;
+  }
+}
+
+/* Ensure product meta sits flush to the left inner edge of the card on mobile */
+@media (max-width: 768px) {
+  .products-list-section .product-card .product-meta,
+  .order-page .products__list .product-card .product-meta {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+    text-align: left !important;
+  }
+
+  .products-list-section .product-card .product-name,
+  .order-page .products__list .product-card .product-name,
+  .products-list-section .product-card .product-desc,
+  .order-page .products__list .product-card .product-desc {
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .products-list-section .product-card .product-meta,
+  .order-page .products__list .product-card .product-meta {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .products-list-section .product-card .product-name,
+  .order-page .products__list .product-card .product-name,
+  .products-list-section .product-card .product-desc,
+  .order-page .products__list .product-card .product-desc {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+}
 }

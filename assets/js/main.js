@@ -235,3 +235,18 @@ window.addEventListener('resize', () => {
         tagMenuTitleLines();
     }, 150);
 });
+
+/*==================== CART BUTTON BEHAVIOR (GLOBAL) ====================*/
+const cartButtons = document.querySelectorAll('.cart-button');
+const cartOverlay = document.getElementById('cart-overlay');
+
+if (cartButtons && cartOverlay) {
+    cartButtons.forEach(cartButton => {
+        cartButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default anchor behavior
+            const isHidden = cartOverlay.getAttribute('aria-hidden') === 'true';
+            cartOverlay.setAttribute('aria-hidden', isHidden ? 'false' : 'true');
+            cartOverlay.classList.toggle('show-cart', isHidden);
+        });
+    });
+}

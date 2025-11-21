@@ -18,7 +18,12 @@
     { id: 'app-eggrolls', name: 'Southwestern Egg Rolls', desc: 'Three large egg rolls served with Ranch', price: 9.00 },
     { id: 'app-onionpetals', name: 'Onion Petals', desc: '', price: 8.50 },
     { id: 'app-pretzel', name: 'Cheese Stuffed Pretzel', desc: 'Served with marinara or nacho cheese', price: 6.00 },
-    { id: 'app-special', name: 'Appetizer Special', desc: 'Ask your server about our appetizer special of the month', price: 0.00 },
+
+  // KIDS MENU
+  { id: 'kid-popcorn', name: 'Popcorn Chicken', desc: '', price: 6.00 },
+  { id: 'kid-minicorndogs', name: 'Mini Corndogs', desc: '', price: 6.00 },
+  { id: 'kid-cheeseburger', name: 'Cheese Burger', desc: '', price: 6.00 },
+  { id: 'kid-macncheese', name: 'Macaroni & Cheese', desc: '', price: 6.00 },
 
     // BURGER BASKETS (customizable)
     { id: 'bur-bare', name: 'Bare Bear', desc: 'Plain hamburger on a bun. Includes choice of fries, tots or coleslaw', price: 10.50, customizable: true },
@@ -139,6 +144,9 @@
 
   const STORAGE_KEY = 'bt_cart_v1';
 
+  // UI state: current active category filter
+  let currentCategory = 'all';
+
   // DOM refs
   const productsList = document.getElementById('products-list');
   const cartItemsEl = document.getElementById('cart-items');
@@ -157,10 +165,22 @@
   function renderProducts(){
     if(!productsList) return;
     productsList.innerHTML = '';
+    // Apply category filter before grouping
+    const productsToRender = PRODUCTS.filter(p => {
+      if(currentCategory === 'all') return true;
+      if(currentCategory === 'pizza') return String(p.id).startsWith('piz');
+      if(currentCategory === 'burgers') return String(p.id).startsWith('bur');
+      if(currentCategory === 'appetizers' || currentCategory === 'app') return String(p.id).startsWith('app');
+      if(currentCategory === 'sea' || currentCategory === 'chicken') return String(p.id).startsWith('sea');
+      if(currentCategory === 'sandwiches' || currentCategory === 'snd') return String(p.id).startsWith('snd');
+      if(currentCategory === 'kids') return (p.name || '').toLowerCase().includes('kids') || String(p.id).startsWith('kid');
+      return true;
+    });
 
     // helper to map id prefix to human-friendly section title
     const sectionMap = {
       app: 'Appetizers',
+      kid: 'Kids Menu',
       bur: 'Burger Baskets',
       sea: 'Chicken & Seafood',
       snd: 'Sandwiches',
@@ -171,17 +191,19 @@
     // Group products by prefix before the first dash (e.g. 'app-', 'bur-')
     const groups = {};
     const order = []; // preserve insertion order
-    PRODUCTS.forEach(p => {
+    productsToRender.forEach(p => {
       const prefix = (p.id || '').split('-')[0] || 'misc';
       if(!groups[prefix]){ groups[prefix] = []; order.push(prefix); }
       groups[prefix].push(p);
     });
 
     // Preferred section order if present, fall back to discovered order
-    const preferred = ['app','bur','sea','snd','sal','piz'];
+  const preferred = ['app','bur','sea','snd','sal','piz'];
     const finalOrder = [];
     preferred.forEach(k => { if(groups[k]) finalOrder.push(k); });
     order.forEach(k => { if(!finalOrder.includes(k)) finalOrder.push(k); });
+    // Ensure Kids Menu ('kid') appears at the end of the order when present
+    if(groups['kid'] && !finalOrder.includes('kid')) finalOrder.push('kid');
 
   // Remove the Salad Bar section from the Order page (not available for online ordering)
   const filteredOrder = finalOrder.filter(k => k !== 'sal');
@@ -214,6 +236,12 @@
         desc.textContent = 'Includes choice of french fries, tater tots or coleslaw. Upgrade to seasoned fries $1.00, sweet potato fries or onion petals $2.00 or salad bar $4.00.';
         sectionEl.appendChild(desc);
       }
+      else if(sectionKey === 'kid'){
+        const desc = document.createElement('p');
+        desc.className = 'section-note';
+        desc.textContent = 'All include a child size drink and fries for $6.00';
+        sectionEl.appendChild(desc);
+      }
 
       const listWrap = document.createElement('div');
       listWrap.className = 'products-list-section';
@@ -227,12 +255,14 @@
         const buttonAction = p.customizable ? 'customize' : 'add';
         
         card.innerHTML = `
-          <h3 class="product-name">${escapeHtml(p.name)}</h3>
-          <p class="product-desc">${escapeHtml(p.desc)}</p>
+          <div class="product-meta">
+            <h3 class="product-name">${escapeHtml(p.name)}</h3>
+            <p class="product-desc">${escapeHtml(p.desc)}</p>
+          </div>
           <div class="product-foot">
             <span class="product-price">${formatMoney(p.price)}</span>
-            <button class="button ${buttonAction}-btn" data-id="${p.id}" aria-label="${buttonText} ${escapeHtml(p.name)}">
-              <i class='bx ${p.customizable ? 'bx-edit' : 'bx-cart-alt'}'></i>
+            <button class="button ${buttonAction}-btn product-action-btn" data-id="${p.id}" aria-label="${buttonText} ${escapeHtml(p.name)}">
+              <span class="btn-label">${buttonText}</span>
             </button>
           </div>
         `;
@@ -255,6 +285,62 @@
       const id = btn.getAttribute('data-id');
       openCustomizationModal(id);
     }));
+
+    // wire category tabs active state (in case tabs were clicked before render)
+    const tabs = document.querySelectorAll('.category-tabs .tab');
+    tabs.forEach(t => {
+      t.classList.toggle('active', t.getAttribute('data-category') === currentCategory);
+    });
+  }
+
+  // Set category filter and re-render products
+  function setCategoryFilter(cat){
+    currentCategory = cat || 'all';
+    // update active class on tabs
+    document.querySelectorAll('.category-tabs .tab').forEach(t => {
+      t.classList.toggle('active', t.getAttribute('data-category') === currentCategory);
+    });
+    renderProducts();
+  }
+
+  function wireCategoryTabs(){
+    // Wire both desktop tabs and mobile dropdown items
+    const tabs = document.querySelectorAll('.category-tabs .tab, .category-dropdown-list .tab');
+    tabs.forEach(tab => tab.addEventListener('click', (e) => {
+      const cat = tab.getAttribute('data-category') || 'all';
+      setCategoryFilter(cat);
+      // if mobile dropdown is open, close it and update toggle label
+      const dropdown = document.querySelector('.category-dropdown');
+      const toggle = document.getElementById('category-dropdown-toggle');
+      if(dropdown && dropdown.classList.contains('open')){
+        dropdown.classList.remove('open');
+        if(toggle) { toggle.setAttribute('aria-expanded','false'); toggle.textContent = (tab.textContent || 'Food Menu') + ' ▾'; }
+      } else if(toggle){
+        // update toggle label to selected category for clarity
+        toggle.textContent = (tab.textContent || 'Food Menu') + ' ▾';
+      }
+    }));
+
+    // Dropdown toggle behaviour (mobile)
+    const dropdownToggle = document.getElementById('category-dropdown-toggle');
+    const dropdownEl = document.querySelector('.category-dropdown');
+    if(dropdownToggle && dropdownEl){
+      dropdownToggle.addEventListener('click', (e) =>{
+        e.stopPropagation();
+        const open = dropdownEl.classList.toggle('open');
+        dropdownToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      // click outside to close
+      document.addEventListener('click', (e) => {
+        if(!dropdownEl.contains(e.target)){
+          if(dropdownEl.classList.contains('open')){
+            dropdownEl.classList.remove('open');
+            dropdownToggle.setAttribute('aria-expanded','false');
+          }
+        }
+      });
+    }
   }
 
   // Cart functions
@@ -335,32 +421,126 @@
         const row = document.createElement('div');
         row.className = 'cart-item';
         // Show customizations if present
-        const descHtml = item.customizations ? `<div class="cart-item-desc muted">${escapeHtml(item.customizations)}</div>` : '';
+        // Determine if this is a Kids item (id prefix 'kid')
+        const isKids = String(item.id || '').startsWith('kid');
+        const kidsTag = isKids ? '<span class="kids-tag">(Kids)</span>' : '';
+        const kidsDesc = isKids ? '<div class="cart-item-kids muted">Child size drink and fries</div>' : '';
+        const customDesc = item.customizations ? `<div class="cart-item-desc muted">${escapeHtml(item.customizations)}</div>` : '';
+        // Combine customizations and kids note (kids note shown below name)
+        const descHtml = [customDesc, kidsDesc].filter(Boolean).join('');
         // layout: left (name) | right-group (qty + price) with a small top-right remove icon
         row.innerHTML = `
           <div class="cart-item-left">
-            <div class="cart-item-name">${escapeHtml(item.name)}</div>
+            <div class="cart-item-name">${escapeHtml(item.name)} ${kidsTag}</div>
             ${descHtml}
           </div>
-          <input class="cart-qty" type="number" min="1" value="${item.qty}" data-id="${item.id}" aria-label="Quantity for ${escapeHtml(item.name)}">
-          <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
-          <button class="cart-remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}"><i class='bx bx-x'></i></button>
+          <div class="cart-item-right">
+            <div class="cart-qty-wrap" data-id="${item.id}">
+              <button class="cart-qty-btn" aria-haspopup="true" aria-expanded="false" data-id="${item.id}">${item.qty}</button>
+              <div class="cart-qty-menu" role="menu" aria-label="Quantity options" data-id="${item.id}">
+                ${[2,3,4,5,6,7,8,9,10].map(q => `<button class="cart-qty-option" data-id="${item.id}" data-qty="${q}" role="menuitem">${q}</button>`).join('')}
+              </div>
+            </div>
+            <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
+            <button class="cart-remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}"><i class='bx bx-x'></i></button>
+          </div>
         `;
         list.appendChild(row);
       });
       cartItemsEl.appendChild(list);
+      // attach qty dropdown behaviour
+      const openMenus = new Set();
+      // Map to suppress duplicate click after a pointer/touch event (prevents double-toggle)
+      const suppressedClicks = new Map();
 
-      // attach qty change & remove handlers
-      cartItemsEl.querySelectorAll('.cart-qty').forEach(input => {
-        input.addEventListener('change', (e) => {
-          const id = input.getAttribute('data-id');
-          updateQty(id, input.value);
+      cartItemsEl.querySelectorAll('.cart-qty-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        const wrap = btn.closest('.cart-qty-wrap');
+        const menu = wrap.querySelector('.cart-qty-menu');
+
+        // Common toggle logic
+        const toggleMenuCommon = (e) => {
+          if(e){
+            if (typeof e.preventDefault === 'function') e.preventDefault();
+            if (typeof e.stopPropagation === 'function') e.stopPropagation();
+          }
+          const isOpen = wrap.classList.toggle('open');
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          if(isOpen) openMenus.add(id); else openMenus.delete(id);
+        };
+
+        // Handler for pointer/touch events — set a short-lived flag so the following
+        // click event (synthesized by many browsers) doesn't double-toggle.
+        const pointerHandler = (e) => {
+          suppressedClicks.set(id, Date.now());
+          // visual tap feedback for touch devices (iOS Safari)
+          try {
+            btn.classList.add('pressed');
+            const removePressed = () => {
+              btn.classList.remove('pressed');
+              document.removeEventListener('pointerup', removePressed);
+              document.removeEventListener('touchend', removePressed);
+            };
+            document.addEventListener('pointerup', removePressed, { once: true });
+            document.addEventListener('touchend', removePressed, { once: true });
+            // fallback timeout to ensure the class is removed
+            setTimeout(removePressed, 400);
+          } catch (err) {
+            // ignore DOM errors
+          }
+          toggleMenuCommon(e);
+        };
+
+        // Click handler — ignore if a recent pointer event occurred for this id
+        const clickHandler = (e) => {
+          const last = suppressedClicks.get(id);
+          if(last && (Date.now() - last) < 700){
+            // consume and ignore this click (it followed a pointer/touch)
+            suppressedClicks.delete(id);
+            if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            if (typeof e.preventDefault === 'function') e.preventDefault();
+            return;
+          }
+          toggleMenuCommon(e);
+        };
+
+        // Desktop click
+        btn.addEventListener('click', clickHandler);
+        // Pointer/touch events for mobile devices
+        btn.addEventListener('pointerdown', pointerHandler, {passive:false});
+        btn.addEventListener('touchstart', pointerHandler, {passive:false});
+
+        // pick quantity
+        menu.querySelectorAll('.cart-qty-option').forEach(opt => {
+          opt.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const qty = parseInt(opt.getAttribute('data-qty'), 10) || 1;
+            const prodId = opt.getAttribute('data-id');
+            updateQty(prodId, qty);
+            // close menu and update button label
+            wrap.classList.remove('open');
+            btn.setAttribute('aria-expanded','false');
+            btn.textContent = String(qty);
+            openMenus.delete(prodId);
+          });
         });
       });
+
+      // attach remove handlers
       cartItemsEl.querySelectorAll('.cart-remove').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
           removeFromCart(id);
+        });
+      });
+
+      // close any open qty menus when clicking outside
+      document.addEventListener('click', (e) => {
+        cartItemsEl.querySelectorAll('.cart-qty-wrap.open').forEach(w => {
+          if(!w.contains(e.target)){
+            w.classList.remove('open');
+            const b = w.querySelector('.cart-qty-btn'); if(b) b.setAttribute('aria-expanded','false');
+          }
         });
       });
     }
@@ -396,6 +576,19 @@
   // Small helpers
   function formatMoney(n){
     return '$' + n.toFixed(2);
+  }
+
+  // Convert 24-hour time (HH:MM) to human-friendly 12-hour format with AM/PM
+  function formatTimeToAmPm(hhmm){
+    if(!hhmm) return '';
+    const parts = String(hhmm).split(':');
+    if(parts.length < 2) return hhmm;
+    let h = parseInt(parts[0],10);
+    const m = parts[1];
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if(h === 0) h = 12;
+    return `${h}:${m} ${ampm}`;
   }
 
   function escapeHtml(s){
@@ -593,6 +786,106 @@
     modal.classList.remove('open');
     setTimeout(() => modal.remove(), 300);
   }
+
+  // Timing modal (ASAP / Schedule) - small lightweight modal
+  function openTimingModal(){
+    const modal = document.createElement('div');
+    modal.className = 'timing-modal-overlay';
+    modal.innerHTML = `
+      <div class="timing-modal" role="dialog" aria-modal="true" aria-labelledby="timing-title">
+        <div class="timing-header">
+          <h3 id="timing-title">Order timing</h3>
+          <button class="timing-close" aria-label="Close timing"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="timing-body">
+          <label class="timing-option"><input type="radio" name="timing" value="asap" checked> ASAP 15-25 min</label>
+          <label class="timing-option schedule-row"><input type="radio" name="timing" value="schedule"> Schedule for later</label>
+          <div class="schedule-time-row" style="display:none; margin-top:.6rem;">
+            <label for="schedule-time">Choose time</label>
+            <input id="schedule-time" type="time">
+          </div>
+        </div>
+        <div class="timing-footer">
+          <button class="button timing-cancel">Cancel</button>
+          <button class="button button-primary timing-confirm">Confirm</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const close = () => {
+      modal.classList.remove('open');
+      setTimeout(() => modal.remove(), 220);
+    };
+
+    // show/hide time input
+    const radios = modal.querySelectorAll('input[name="timing"]');
+    const schedRow = modal.querySelector('.schedule-time-row');
+    radios.forEach(r => r.addEventListener('change', () => {
+      if(r.value === 'schedule' && r.checked){ schedRow.style.display = 'block'; }
+      if(r.value === 'asap' && r.checked){ schedRow.style.display = 'none'; }
+    }));
+
+    modal.querySelector('.timing-close').addEventListener('click', close);
+    modal.querySelector('.timing-cancel').addEventListener('click', (e) => { e.preventDefault(); close(); });
+
+    modal.querySelector('.timing-confirm').addEventListener('click', (e) => {
+      e.preventDefault();
+      const selected = modal.querySelector('input[name="timing"]:checked').value;
+      const toggle = document.getElementById('timing-toggle');
+      if(!toggle) { close(); return; }
+      if(selected === 'asap'){
+        // On confirm, show a compact label and mark selection so auto-labeling won't override
+        toggle.textContent = 'ASAP 15-25 min ▾';
+        toggle.dataset.timing = 'asap';
+      } else {
+        const timeInput = modal.querySelector('#schedule-time');
+        const t = timeInput && timeInput.value ? timeInput.value : '';
+        const pretty = t ? formatTimeToAmPm(t) : '';
+        toggle.textContent = pretty ? `Scheduled: ${pretty} ▾` : 'Scheduled ▾';
+        toggle.dataset.timing = 'scheduled';
+        if(t) toggle.dataset.timingValue = t;
+      }
+      close();
+    });
+
+    // click outside to close
+    modal.addEventListener('click', (e) => { if(e.target === modal) close(); });
+    document.addEventListener('keydown', function esc(e){ if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', esc); } });
+
+    setTimeout(() => modal.classList.add('open'), 10);
+  }
+
+  function wireTimingToggle(){
+    const t = document.getElementById('timing-toggle');
+    if(!t) return;
+    // initialize timing state marker on the toggle
+    t.dataset.timing = t.dataset.timing || 'default';
+
+    // show a compact label on small screens for space savings (only when user hasn't chosen a timing)
+    const applyCompactLabel = () => {
+      try{
+        if(t.dataset.timing === 'default'){
+          if(window.matchMedia && window.matchMedia('(max-width: 768px)').matches){
+            t.textContent = 'ASAP Pickup ▾';
+          } else {
+            // restore fuller label for larger screens
+            t.textContent = 'ASAP · Pickup in 15 - 25 min ▾';
+          }
+        }
+      }catch(e){ /* ignore */ }
+    };
+
+    applyCompactLabel();
+    // update on resize
+    window.addEventListener('resize', applyCompactLabel);
+
+    t.addEventListener('click', (e) => {
+      if(e && typeof e.preventDefault === 'function') e.preventDefault();
+      openTimingModal();
+    });
+  }
   
   function addCustomizedToCart(productId, customizations){
     const prod = PRODUCTS.find(p => p.id === productId);
@@ -686,6 +979,8 @@
     wireClearCart();
     wireCheckout();
     wireCartButton();
+    wireTimingToggle();
+    wireCategoryTabs();
 
     // expose for debugging
     window.__bt_cart = cart;
