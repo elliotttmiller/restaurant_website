@@ -13,16 +13,18 @@
   'use strict';
 
   // Square configuration
-  // NOTE: Replace these with your actual Square credentials
-  // For production, use production application ID and location ID
+  // NOTE: In production, these should be loaded from environment variables or a secure config
+  // Never commit real credentials to version control
   const SQUARE_CONFIG = {
-    // Sandbox Application ID (replace with production app ID for live)
-    applicationId: 'sandbox-sq0idb-YOUR_APP_ID_HERE',
-    // Location ID from your Square account
-    locationId: 'YOUR_LOCATION_ID_HERE',
-    // Use 'sandbox' for testing, 'production' for live
-    environment: 'sandbox'
+    // Get credentials from environment or config file
+    // In a production setup, use a server-side endpoint to fetch these securely
+    applicationId: window.SQUARE_APP_ID || 'sandbox-sq0idb-YOUR_APP_ID_HERE',
+    locationId: window.SQUARE_LOCATION_ID || 'YOUR_LOCATION_ID_HERE',
+    environment: window.SQUARE_ENVIRONMENT || 'sandbox' // 'sandbox' or 'production'
   };
+
+  // API endpoint configuration - customize for your deployment
+  const API_BASE_URL = window.SQUARE_API_BASE_URL || '/api/square';
 
   let payments;
   let card;
@@ -96,7 +98,7 @@
     try {
       // In a production environment, this would be a server-side API call
       // The server would use the Square API to create a payment
-      const response = await fetch('/api/square/process-payment', {
+      const response = await fetch(`${API_BASE_URL}/process-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +135,7 @@
     try {
       // In production, this would call your server-side API
       // which would use Square Orders API to create an order
-      const response = await fetch('/api/square/create-order', {
+      const response = await fetch(`${API_BASE_URL}/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

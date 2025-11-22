@@ -1002,7 +1002,7 @@
 
       try {
         // Check if Square Payment is available
-        if (window.SquarePayment && typeof window.SquarePayment.handleCheckout === 'function') {
+        if (window.SquarePayment?.handleCheckout) {
           // Process payment through Square
           const result = await window.SquarePayment.handleCheckout(orderData, customerData);
           
