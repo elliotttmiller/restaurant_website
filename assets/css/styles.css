@@ -563,13 +563,16 @@ img{
   .nav{
     --nav-side-gap: 1rem;
     padding: 0 var(--nav-side-gap);
+    /* Fix mobile grid so center column (logo) has space - use 1fr for sides, minmax for center */
+    grid-template-columns: 1fr minmax(200px, auto) 1fr;
   }
 
   /* Make the logo fit inside the header by sizing it relative to the header height */
   .nav__logo-center img{
     /* Slightly reduce logo size on mobile so header icons have more breathing room */
-    height: calc(var(--header-height) - 36px);
-    max-height: 86px;
+    height: 96px;
+    width: auto;
+    max-height: 96px;
   }
 
   /* Hide desktop menus on mobile */
@@ -4071,7 +4074,6 @@ body.dark-theme .customize-body::-webkit-scrollbar{ display:none }
    Use high-specificity and !important to win over earlier rules
    without changing upstream variables. */
 .nav__logo-center img {
-  height: auto !important;
   max-height: 140px !important;
   width: auto !important;
   display: block;
@@ -4090,7 +4092,12 @@ body.dark-theme .customize-body::-webkit-scrollbar{ display:none }
 @media screen and (max-width: 768px) {
   /* Mobile: slightly reduce logo so it fits comfortably and give icons
      a small top margin so they don't hug the screen edge. */
-  .nav__logo-center img { max-height: 96px !important; }
+  .nav__logo-center img { 
+    height: 96px !important; 
+    max-height: 96px !important; 
+    width: auto !important;
+    min-width: 200px !important;
+  }
   .change-theme, .cart-button, .nav__toggle { margin-top: 6px; top: auto; transform: none !important; }
 }
 
