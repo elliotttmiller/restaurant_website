@@ -4428,3 +4428,167 @@ body.dark-theme .cart-qty-option:hover{ background: rgba(255,255,255,0.08); }
 }
 }
 }
+/* ==================================================
+   SQUARE PAYMENT FORM STYLES
+   Production-ready styling for Square Web Payments SDK
+   ================================================== */
+
+/* Card payment container */
+#card-container {
+  margin: 1rem 0;
+  min-height: 90px;
+}
+
+/* Square payment form iframe styling */
+#card-container iframe {
+  border: 1px solid var(--text-color-light);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+/* Payment message styling */
+.payment-message {
+  display: none;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.payment-message--info {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-left: 4px solid #1976d2;
+}
+
+.payment-message--success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #2e7d32;
+}
+
+.payment-message--error {
+  background-color: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #c62828;
+}
+
+/* Dark theme overrides for payment messages */
+body.dark-theme .payment-message--info {
+  background-color: rgba(25, 118, 210, 0.15);
+  color: #90caf9;
+  border-left-color: #90caf9;
+}
+
+body.dark-theme .payment-message--success {
+  background-color: rgba(46, 125, 50, 0.15);
+  color: #a5d6a7;
+  border-left-color: #a5d6a7;
+}
+
+body.dark-theme .payment-message--error {
+  background-color: rgba(198, 40, 40, 0.15);
+  color: #ef9a9a;
+  border-left-color: #ef9a9a;
+}
+
+/* Checkout form fieldsets */
+.checkout-form fieldset {
+  border: none;
+  padding: 0;
+  margin: 1.5rem 0;
+}
+
+.checkout-form legend {
+  font-weight: var(--font-semi-bold);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--title-color);
+}
+
+.checkout-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: var(--font-medium);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.checkout-form input[type="text"],
+.checkout-form input[type="tel"],
+.checkout-form input[type="email"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--text-color-light);
+  border-radius: 6px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  background-color: var(--body-color);
+  color: var(--text-color);
+  transition: border-color 0.3s ease;
+}
+
+.checkout-form input[type="text"]:focus,
+.checkout-form input[type="tel"]:focus,
+.checkout-form input[type="email"]:focus {
+  outline: none;
+  border-color: var(--first-color);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-theme .checkout-form input[type="text"]:focus,
+body.dark-theme .checkout-form input[type="tel"]:focus,
+body.dark-theme .checkout-form input[type="email"]:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+/* Primary button styling for checkout */
+.button--primary {
+  background-color: var(--first-color);
+  color: var(--body-color);
+  font-weight: var(--font-semi-bold);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+}
+
+.button--primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+body.dark-theme .button--primary {
+  background-color: var(--first-color);
+  color: var(--body-color);
+}
+
+/* Responsive adjustments for payment form */
+@media screen and (max-width: 768px) {
+  .checkout-form fieldset {
+    margin: 1rem 0;
+  }
+
+  .checkout-form legend {
+    font-size: 1rem;
+  }
+
+  #card-container {
+    min-height: 80px;
+  }
+
+  .button--primary {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+}
