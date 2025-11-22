@@ -209,8 +209,26 @@
                 </div>
 
                 <form id="checkout-form" class="checkout-form" novalidate>
-                    <!-- Contact & Pickup removed for pickup-only flow per UX request -->
-                    <button id="place-order" class="button" type="submit">Place Order</button>
+                    <fieldset>
+                        <legend>Contact Information</legend>
+                        <label for="customer-name">Name *</label>
+                        <input id="customer-name" name="name" type="text" required placeholder="Your full name" autocomplete="name">
+
+                        <label for="customer-phone">Phone *</label>
+                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212" autocomplete="tel">
+
+                        <label for="customer-email">Email (Optional)</label>
+                        <input id="customer-email" name="email" type="email" placeholder="your@email.com" autocomplete="email">
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Payment Information</legend>
+                        <!-- Square Card Payment Form -->
+                        <div id="card-container"></div>
+                        <div id="payment-message" class="payment-message" role="alert" aria-live="assertive"></div>
+                    </fieldset>
+
+                    <button id="place-order" class="button button--primary" type="submit">Complete Order & Pay</button>
                 </form>
 
                 <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
@@ -220,8 +238,12 @@
         <!--========== SCROLL REVEAL ==========-->
         <script src="https://unpkg.com/scrollreveal"></script>
 
+        <!--========== SQUARE WEB PAYMENTS SDK ==========-->
+        <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+
         <!--========== MAIN JS ==========-->
         <script src="assets/js/main.js"></script>
+        <script src="assets/js/square-payment.js"></script>
         <script src="assets/js/order.js"></script>
     </body>
 </html>

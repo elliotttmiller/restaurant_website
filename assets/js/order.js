@@ -945,20 +945,100 @@
     flashCartMessage(`${prod.name} added to cart`);
   }
 
-  // Checkout form: for now, do not submit orders to a backend. Show a friendly message and clear cart.
+  // Checkout form: Process payment through Square
   function wireCheckout(){
     if(!checkoutForm) return;
-    checkoutForm.addEventListener('submit', (e) => {
+    checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Validate cart has items
       const totals = computeTotals();
       if(totals.subtotal <= 0){
         flashCartMessage('Add items to your cart before placing an order.');
         return;
       }
-      // simulate order placement
-      flashCartMessage('Order placed (demo). We do not process payments here.');
-      clearCart();
-      checkoutForm.reset();
+
+      // Get customer information
+      const customerName = document.getElementById('customer-name')?.value?.trim();
+      const customerPhone = document.getElementById('customer-phone')?.value?.trim();
+      const customerEmail = document.getElementById('customer-email')?.value?.trim();
+
+      // Validate required fields
+      if (!customerName || !customerPhone) {
+        flashCartMessage('Please fill in your name and phone number.');
+        return;
+      }
+
+      // Prepare cart items for Square
+      const cartItems = Object.values(cart).map(item => ({
+        name: item.name,
+        quantity: item.qty,
+        price: item.price,
+        customizations: item.customizations || '',
+        totalPrice: item.price * item.qty
+      }));
+
+      // Prepare order data
+      const orderData = {
+        items: cartItems,
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        total: totals.total
+      };
+
+      const customerData = {
+        name: customerName,
+        phone: customerPhone,
+        email: customerEmail,
+        pickupTime: 'ASAP', // Could be made dynamic
+        note: '' // Could add a notes field
+      };
+
+      // Disable submit button during processing
+      const submitButton = document.getElementById('place-order');
+      const originalText = submitButton.textContent;
+      submitButton.disabled = true;
+      submitButton.textContent = 'Processing...';
+
+      try {
+        // Check if Square Payment is available
+        if (window.SquarePayment?.handleCheckout) {
+          // Process payment through Square
+          const result = await window.SquarePayment.handleCheckout(orderData, customerData);
+          
+          if (result.success) {
+            // Payment successful
+            flashCartMessage(`Order placed successfully! Order ID: ${result.orderId}`);
+            window.SquarePayment.showPaymentMessage(
+              `Payment successful! Your order ${result.orderId} has been placed. We'll have it ready for pickup soon!`,
+              'success'
+            );
+            
+            // Clear cart and reset form
+            clearCart();
+            checkoutForm.reset();
+          } else {
+            throw new Error('Payment was not successful');
+          }
+        } else {
+          // Square not available - show demo message
+          // This is the fallback for when Square SDK is not loaded or configured
+          flashCartMessage('Demo Mode: Order would be placed. Configure Square credentials for live payments.');
+          window.SquarePayment?.showPaymentMessage(
+            'Demo mode: Square payment integration needs configuration. Please contact the restaurant to complete your order.',
+            'info'
+          );
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        const errorMessage = error.message || 'Payment failed. Please try again or call us to place your order.';
+        flashCartMessage(errorMessage);
+        window.SquarePayment?.showPaymentMessage(errorMessage, 'error');
+      } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.textContent = originalText;
+      }
     });
   }
 
