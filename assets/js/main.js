@@ -97,13 +97,16 @@ const selectedIcon = localStorage.getItem('selected-icon')
 const getCurrentTheme = () => document.body.classList.contains(darkTheme) ? 'dark' : 'light'
 const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx-moon' : 'bx-sun'
 
-// Function to update logo based on theme
+// Function to update logo based on theme (safe: no-op if header not present)
 const updateHeaderLogo = () => {
-    if (document.body.classList.contains(darkTheme)) {
-        headerLogo.src = 'assets/img/bear-trap-header-dark.svg'
-    } else {
-        headerLogo.src = 'assets/img/bear-trap-header-light.svg'
-    }
+    if (!headerLogo) return;
+    // Determine desired src (use relative path so comparisons are reliable)
+    const desired = document.body.classList.contains(darkTheme)
+        ? 'assets/img/bear-trap-header-dark.svg'
+        : 'assets/img/bear-trap-header-light.svg'
+    // Only update the src if it actually differs to avoid duplicate requests
+    const current = headerLogo.getAttribute('src') || ''
+    if (current !== desired) headerLogo.setAttribute('src', desired)
 }
     // Function to update menu logo based on theme (menu page only)
     const updateMenuLogo = () => {
@@ -150,6 +153,14 @@ if (selectedTheme) {
   updateFooterLogo()
     updateMenuLogo()
 }
+
+// Ensure header/footer logos reflect the current theme on every page load.
+// This is intentionally minimal and only sets the image src if the elements exist.
+document.addEventListener('DOMContentLoaded', () => {
+    updateHeaderLogo();
+    updateFooterLogo();
+    updateMenuLogo();
+});
 
 // Activate / deactivate the theme manually with the button (desktop)
 themeButton.addEventListener('click', toggleTheme)

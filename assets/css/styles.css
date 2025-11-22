@@ -4094,6 +4094,28 @@ body.dark-theme .customize-body::-webkit-scrollbar{ display:none }
   .change-theme, .cart-button, .nav__toggle { margin-top: 6px; top: auto; transform: none !important; }
 }
 
+/* ==================================================
+   Mobile stacking fix — ensure centered header logo
+   appears above the full-screen mobile menu overlay.
+   This is intentionally scoped to <=768px and only
+   adjusts stacking (no layout/size changes). Reversible.
+   ================================================== */
+@media screen and (max-width: 768px) {
+  .nav__logo-center {
+    position: relative !important;
+    z-index: calc(var(--z-fixed) + 10) !important;
+  }
+  .nav__logo-center img {
+    position: relative !important;
+    z-index: calc(var(--z-fixed) + 11) !important;
+    /* keep existing sizing rules intact */
+    height: auto !important;
+    max-height: 96px !important;
+    width: auto !important;
+    display: block !important;
+  }
+}
+
 /* Slightly reduce the space above the products header itself */
 .products__header{ margin-top: 0.6rem !important; padding-top: 0 !important }
 
