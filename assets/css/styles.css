@@ -218,6 +218,46 @@ body.dark-theme{
   border-radius: 8px;
 }
 .cart-close:hover{ background: rgba(0,0,0,0.06); }
+
+/* Footer: inline contact row placed under logo for mobile UI
+   Minimal, scoped styles so other footer columns/layout remain unchanged. */
+.footer__contact-inline{
+  display:flex;
+  flex-direction:column; /* stack address above phone */
+  gap:0.25rem;
+  align-items:center;
+  justify-content:center;
+  margin-top:0.75rem;
+}
+.footer__contact-link{
+  color: var(--text-color);
+  text-decoration: none;
+  font-weight: 600;
+  background: transparent;
+}
+.footer__contact-link:hover{
+  text-decoration: underline;
+}
+
+/* Make address a single, non-wrapping line under the logo; keep phone on its own line */
+.footer__contact-address{
+  white-space: nowrap;
+  display: block;
+}
+.footer__contact-phone{
+  display: block;
+}
+
+/* Ensure footer logo area keeps spacing and does not push other columns
+   on narrow screens; only adjusts the inner contact row. */
+.footer__content { display: flex; flex-direction: column; align-items: center; }
+
+@media screen and (min-width: 900px) {
+  /* On wider screens keep existing grid/columns behavior by resetting alignment
+     for footer content so it remains left-aligned where expected. */
+  .footer__content { align-items: flex-start; }
+  .footer__contact-inline { justify-content: flex-start; }
+}
 .cart__header{ display:flex; align-items:center; justify-content:space-between; gap: .75rem; margin-bottom: 1rem }
 .cart__items{ margin-bottom: 1.3rem }
 .cart-list{ display:flex; flex-direction:column; gap: 1rem }
@@ -2875,6 +2915,23 @@ body.dark-theme .services__img {
     width: 100%;
   }
 
+  /* Reduce spacing for Quick Links (footer column 2) to match Hours spacing */
+  .footer__container .footer__content:nth-child(2) ul {
+    gap: 0.18rem; /* tightened to better visually match Hours */
+    margin-top: 0.08rem;
+  }
+  .footer__container .footer__content:nth-child(2) .footer__link {
+    padding: 0.18rem 0; /* reduced vertical padding to align with Hours */
+    display: block;
+    line-height: 1.05;
+  }
+
+  /* For very small horizontally-scrollable footer cards, also tighten the Quick Links card */
+  @media screen and (max-width: 480px) {
+    .footer__container .footer__content:nth-child(2) ul { gap: 0.18rem; }
+    .footer__container .footer__content:nth-child(2) .footer__link { padding: 0.18rem 0; }
+  }
+
   /* Assign grid areas by source order: nth-child mapping
      (HTML order: 1=logo, 2=links, 3=address, 4=hours) */
   .footer__container .footer__content:nth-child(2) { grid-area: links; }
@@ -2884,16 +2941,16 @@ body.dark-theme .services__img {
 
   /* Logo + socials centered inline at the bottom of the footer grid */
   .footer__container .footer__content:nth-child(1){
+    /* keep the content stacked: logo/social row above, contact below */
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* tightened gap so logo and icon sit closer together on mobile */
-    gap: 0.25rem;
     padding: 0.5rem 0;
   }
-  /* make logo and icon visually balanced on small screens */
-  /* slightly reduce logo height and tighten spacing to match the smaller icon */
+  /* make logo and icon visually balanced on small screens; the .footer__logo-row
+     contains both so they appear side-by-side while the contact row remains below */
+  .footer__logo-row { display: flex; flex-direction: row; align-items: center; gap: 0.25rem; }
   .footer__logo-img { width: auto; height: 40px; margin: 0; display: inline-block; }
   .footer__social-group { display: inline-flex; gap: 0.2rem; margin: 0; }
   /* reduce facebook icon size so it sits inline with the logo */
