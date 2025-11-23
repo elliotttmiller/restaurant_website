@@ -48,6 +48,11 @@ app.use(express.json({
 }));
 app.use(morgan('tiny'));
 
+// Serve the frontend static files from the project root (one level up from api/)
+// This allows requests like GET /index.html or /order.html to return the static pages
+const publicRoot = path.resolve(__dirname, '..')
+app.use(express.static(publicRoot))
+
 const PORT = process.env.PORT || 3000;
 
 // Determine which token to use. Prefer production vars, but if running in sandbox

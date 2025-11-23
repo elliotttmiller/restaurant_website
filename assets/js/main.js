@@ -95,7 +95,11 @@ const selectedIcon = localStorage.getItem('selected-icon')
 
 // We obtain the current theme that the interface has by validating the dark-theme class
 const getCurrentTheme = () => document.body.classList.contains(darkTheme) ? 'dark' : 'light'
-const getCurrentIcon = () => themeButton.classList.contains(iconTheme) ? 'bx-moon' : 'bx-sun'
+// Guard access to themeButton in case the element is missing on a page
+const getCurrentIcon = () => {
+    if (!themeButton) return 'bx-sun'
+    return themeButton.classList.contains(iconTheme) ? 'bx-moon' : 'bx-sun'
+}
 
 // Function to update logo based on theme (safe: no-op if header not present)
 const updateHeaderLogo = () => {
@@ -104,9 +108,13 @@ const updateHeaderLogo = () => {
     const desired = document.body.classList.contains(darkTheme)
         ? 'assets/img/bear-trap-header-dark.svg'
         : 'assets/img/bear-trap-header-light.svg'
-    // Only update the src if it actually differs to avoid duplicate requests
+    // Use getAttribute to compare the raw attribute value (avoids absolute URL differences)
     const current = headerLogo.getAttribute('src') || ''
-    if (current !== desired) headerLogo.setAttribute('src', desired)
+    if (current !== desired) {
+        headerLogo.setAttribute('src', desired)
+        // Also set the DOM property for immediate rendering
+        try { headerLogo.src = desired } catch (e) { /* ignore */ }
+    }
 }
     // Function to update menu logo based on theme (menu page only)
     const updateMenuLogo = () => {
@@ -145,25 +153,26 @@ const toggleTheme = () => {
 
 // We validate if the user previously chose a topic
 if (selectedTheme) {
-  // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
-  document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](darkTheme)
-  themeButton.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
-  if(themeButtonMobile) themeButtonMobile.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
-  updateHeaderLogo()
-  updateFooterLogo()
-    updateMenuLogo()
+    // If the validation is fulfilled, we apply the stored theme safely
+    document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](darkTheme)
+    if (themeButton) themeButton.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
+    if (themeButtonMobile) themeButtonMobile.classList[selectedIcon === 'bx-moon' ? 'add' : 'remove'](iconTheme)
+    // Ensure logos are updated to reflect the restored theme
+    try { updateHeaderLogo() } catch (e) { /* ignore */ }
+    try { updateFooterLogo() } catch (e) { /* ignore */ }
+    try { updateMenuLogo() } catch (e) { /* ignore */ }
 }
 
 // Ensure header/footer logos reflect the current theme on every page load.
 // This is intentionally minimal and only sets the image src if the elements exist.
+// Update logos on load (call directly and also on DOMContentLoaded to be robust)
+try { updateHeaderLogo(); updateFooterLogo(); updateMenuLogo(); } catch (e) { /* ignore */ }
 document.addEventListener('DOMContentLoaded', () => {
-    updateHeaderLogo();
-    updateFooterLogo();
-    updateMenuLogo();
+    try { updateHeaderLogo(); updateFooterLogo(); updateMenuLogo(); } catch (e) { /* ignore */ }
 });
 
 // Activate / deactivate the theme manually with the button (desktop)
-themeButton.addEventListener('click', toggleTheme)
+if (themeButton) themeButton.addEventListener('click', toggleTheme)
 
 // Activate / deactivate the theme manually with the button (mobile)
 if(themeButtonMobile){
