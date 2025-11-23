@@ -277,6 +277,66 @@ body.dark-theme{
 .cart-qty{ width: 64px; flex: 0 0 64px; padding: .36rem .48rem; border-radius: 10px; border:1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.02); color: var(--text-color); font-size: .95rem; text-align:center; margin-right: 4px }
 .cart-item-price{ width: 80px; flex: 0 0 80px; text-align: right; font-weight: 700 }
 
+/* New sleek desktop quantity stepper (only active on wider screens) */
+@media screen and (min-width: 900px) {
+  .qty-stepper{
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem; /* slightly tighter */
+    background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 0.12rem 0.18rem; /* smaller padding for a sleeker look */
+    border-radius: 8px; /* slightly tighter radius */
+    min-width: 92px;
+    justify-content: center;
+  }
+
+  .qty-stepper .qty-btn{
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.04);
+    color: var(--text-color);
+    font-size: 0.98rem; /* slightly smaller glyph */
+    width: 28px; /* smaller square buttons */
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px; /* sleeker corners */
+    cursor: pointer;
+    transition: background .12s ease, transform .08s ease, border-color .12s ease;
+    box-shadow: none;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .qty-stepper .qty-btn:hover{
+    background: rgba(0,0,0,0.04);
+    transform: translateY(-1px);
+    border-color: rgba(0,0,0,0.06);
+  }
+
+  .qty-stepper .qty-value{
+    width: 40px; /* narrower value field */
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 0.95rem; /* slightly reduced text size */
+    color: var(--text-color);
+    appearance: textfield;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    padding: 0; /* remove inner padding so height remains small */
+  }
+
+  /* hide spinner in number input for webkit */
+  .qty-stepper .qty-value::-webkit-outer-spin-button,
+  .qty-stepper .qty-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* fallback: ensure small screens still show a compact numeric label */
+  @media (max-width: 899px){ .qty-stepper{ display: none !important; } }
+}
+
 /* Mobile: nudge quantity to the right and tighten spacing in cart drawer */
 @media (max-width: 700px) {
   .cart-item-left{ max-width: calc(100% - 220px); }

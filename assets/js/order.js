@@ -428,13 +428,27 @@
         const customDesc = item.customizations ? `<div class="cart-item-desc muted">${escapeHtml(item.customizations)}</div>` : '';
         // Combine customizations and kids note (kids note shown below name)
         const descHtml = [customDesc, kidsDesc].filter(Boolean).join('');
-        // layout: left (name) | right-group (qty + price) with a small top-right remove icon
+        // layout: left (name) | right-group (qty stepper + price + remove)
+        // Render a modern desktop stepper when on wider screens; fall back to numeric label on small screens
+        const isDesktop = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 900px)').matches);
+
+        const qtyControlHtml = isDesktop ? `
+            <div class="qty-stepper" data-id="${item.id}" aria-label="Quantity control for ${escapeHtml(item.name)}">
+              <button class="qty-btn qty-decrement" aria-label="Decrease quantity">−</button>
+              <input class="qty-value" type="number" min="1" value="${item.qty}" aria-label="Quantity for ${escapeHtml(item.name)}">
+              <button class="qty-btn qty-increment" aria-label="Increase quantity">+</button>
+            </div>
+          ` : `
+            <div class="cart-qty" aria-hidden="false">${item.qty}</div>
+          `;
+
         row.innerHTML = `
           <div class="cart-item-left">
             <div class="cart-item-name">${escapeHtml(item.name)} ${kidsTag}</div>
             ${descHtml}
           </div>
           <div class="cart-item-right">
+            ${qtyControlHtml}
             <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
             <button class="cart-remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}"><i class='bx bx-x'></i></button>
           </div>
@@ -448,6 +462,47 @@
           const id = btn.getAttribute('data-id');
           removeFromCart(id);
         });
+      });
+
+      // attach qty stepper handlers (desktop)
+      cartItemsEl.querySelectorAll('.qty-stepper').forEach(stepper => {
+        const id = stepper.getAttribute('data-id');
+        const dec = stepper.querySelector('.qty-decrement');
+        const inc = stepper.querySelector('.qty-increment');
+        const input = stepper.querySelector('.qty-value');
+
+        if(dec){ dec.addEventListener('click', (e) => {
+          e.preventDefault();
+          const next = Math.max(1, (parseInt(input.value, 10) || 1) - 1);
+          updateQty(id, next);
+        }); }
+
+        if(inc){ inc.addEventListener('click', (e) => {
+          e.preventDefault();
+          const next = (parseInt(input.value, 10) || 1) + 1;
+          updateQty(id, next);
+        }); }
+
+        if(input){
+          input.addEventListener('change', (e) => {
+            let v = parseInt(input.value, 10) || 1;
+            if(v < 1) v = 1;
+            updateQty(id, v);
+          });
+
+          // allow keyboard arrow adjustments locally before update
+          input.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){
+              e.preventDefault();
+              const cur = parseInt(input.value, 10) || 1;
+              const nv = e.key === 'ArrowUp' ? cur + 1 : Math.max(1, cur - 1);
+              input.value = nv;
+            }
+            if(e.key === 'Enter'){
+              input.blur();
+            }
+          });
+        }
       });
 
       // close any open qty menus when clicking outside
