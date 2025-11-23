@@ -152,16 +152,9 @@
         <footer class="footer section bd-container">
             <div class="footer__container bd-grid">
                 <div class="footer__content">
-                                        <div class="footer__logo-row">
-                                            <img src="assets/img/bear-trap-footer-light.svg" alt="The Bear Trap Logo" class="footer__logo-img">
-                                            <div class="footer__social-group">
-                                                    <a href="https://www.facebook.com/BearTrapSC/" class="footer__social"><i class='bx bxl-facebook'></i></a>
-                                            </div>
-                                        </div>
-                    <!-- Inline contact row: clickable address (maps) and phone aligned horizontally under logo/social -->
-                    <div class="footer__contact-inline" aria-label="Address and phone">
-                        <a class="footer__contact-link footer__contact-address" href="https://www.google.com/maps/place/Bear+Trap/@45.7506425,-94.9410189,17z" target="_blank" rel="noopener">43356 County Rd. 112, Sauk Centre, MN</a>
-                        <a class="footer__contact-link footer__contact-phone" href="tel:+13203513505">(320) 351-3505</a>
+                    <img src="assets/img/bear-trap-footer-light.svg" alt="The Bear Trap Logo" class="footer__logo-img">
+                    <div class="footer__social-group">
+                        <a href="https://www.facebook.com/BearTrapSC/" class="footer__social"><i class='bx bxl-facebook'></i></a>
                     </div>
                 </div>
 
@@ -174,7 +167,16 @@
                     </ul>
                 </div>
 
-                <!-- Address column removed per request; contact moved inline under logo -->
+                <div class="footer__content">
+                    <h3 class="footer__title">Address</h3>
+                    <a href="https://www.google.com/maps/place/Bear+Trap/@45.7506425,-94.9410189,17z/data=!4m6!3m5!1s0x52b594663f9ea001:0x31546e2de8051c97!8m2!3d45.75065!4d-94.938444!16s%2Fg%2F1tdg7fx9?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D" target="_blank" class="footer__link">
+                        <ul>
+                            <li>43356 County Rd. 112</li>
+                            <li>Sauk Centre, MN 56378</li>
+                        </ul>
+                    </a>
+                    <a href="tel:+13203513505" class="footer__link">(320) 351-3505</a>
+                </div>
 
                 <div class="footer__content">
                     <h3 class="footer__title">Hours</h3>
@@ -185,7 +187,6 @@
                     </ul>
                 </div>
             </div>
-
             <p class="footer__copy">&#169; 2025 The Bear Trap. All rights reserved</p>
         </footer>
 
@@ -245,5 +246,60 @@
         <script src="assets/js/main.js"></script>
         <script src="assets/js/square-payment.js"></script>
         <script src="assets/js/order.js"></script>
+        <!-- Order page: ensure footer reveal attaches after order scripts run -->
+        <script>
+            // Use an IntersectionObserver to trigger ScrollReveal when the footer
+            // actually scrolls into view. This mirrors the animation parameters
+            // used globally and avoids re-initializing ScrollReveal (which can
+            // create a slightly different animation curve). Runs only on order page.
+            (function(){
+                function tryReveal() {
+                    try {
+                        if (typeof sr === 'undefined') return false;
+                        // reveal footer columns with same options as global call
+                        sr.reveal('.footer__content', { interval: 200 });
+                        // reveal footer container for a gentle entrance from bottom
+                        sr.reveal('.footer', { origin: 'bottom', distance: '20px', duration: 900 });
+                        return true;
+                    } catch (e) {
+                        console.warn('Order reveal error:', e);
+                        return false;
+                    }
+                }
+
+                // If ScrollReveal already applied and footer animated, do nothing.
+                // Otherwise observe the footer and reveal when it becomes visible.
+                if (!tryReveal()) {
+                    window.addEventListener('load', function(){
+                        try {
+                            var footer = document.querySelector('.footer');
+                            if (!footer) return;
+                            var obs = new IntersectionObserver(function(entries){
+                                entries.forEach(function(entry){
+                                    if (entry.isIntersecting) {
+                                        tryReveal();
+                                        obs.unobserve(entry.target);
+                                    }
+                                });
+                            }, { threshold: 0.08 });
+                            obs.observe(footer);
+                        } catch (e) { /* swallow */ }
+                    });
+                }
+            })();
+        </script>
+        <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Ensure ScrollReveal is applied to the footer on the order page
+    const sr = ScrollReveal({
+      origin: 'top',
+      distance: '30px',
+      duration: 2000,
+      reset: true
+    });
+
+    sr.reveal('.footer__content', { interval: 200 });
+  });
+</script>
     </body>
 </html>

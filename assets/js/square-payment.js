@@ -18,8 +18,10 @@
   // Never commit real credentials to version control
   const SQUARE_ECOSYSTEM = window.SQUARE_ECOSYSTEM || {
     environment: 'sandbox', // 'sandbox' or 'production'
-    appId: window.SQUARE_APP_ID || 'sandbox-sq0idb-YOUR_APP_ID_HERE',
-    locationId: window.SQUARE_LOCATION_ID || 'YOUR_LOCATION_ID_HERE',
+    // We'll populate these from the server-side sandbox env variables via
+    // the public `/api/square/config` endpoint. Do NOT use production vars.
+    appId: null,
+    locationId: null,
     apiBase: window.SQUARE_API_BASE_URL || '/api/square',
     endpoints: {
       // Core ordering and payment
@@ -81,8 +83,28 @@
       console.error('Square.js failed to load properly');
       return false;
     }
-
+    // Fetch the sandbox-only public config from the server and use it to
+    // initialize the client SDK. Use the short alias `/api/config` so that
+    // callers don't need to know the internal API base path.
     try {
+      const cfgResp = await fetch('/api/config');
+      if (!cfgResp || !cfgResp.ok) {
+        console.error('Failed to fetch Square config from server');
+        return false;
+      }
+
+      const cfg = await cfgResp.json();
+      if (!cfg || !cfg.applicationId) {
+        console.error('Square config missing applicationId (sandbox app id)');
+        return false;
+      }
+
+      // Apply sandbox config values
+      SQUARE_CONFIG.applicationId = cfg.applicationId;
+      SQUARE_CONFIG.locationId = cfg.locationId || SQUARE_CONFIG.locationId;
+      SQUARE_ECOSYSTEM.environment = cfg.environment || SQUARE_ECOSYSTEM.environment;
+
+      // Initialize payments using the sandbox app id and location id
       payments = window.Square.payments(
         SQUARE_CONFIG.applicationId,
         SQUARE_CONFIG.locationId

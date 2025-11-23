@@ -2266,6 +2266,21 @@ body.dark-theme .category-dropdown-list{ border:1px solid rgba(255,255,255,0.06)
 }
 
 /* Remove any pseudo-element outlines/frames (used for decorative borders/hover outlines) */
+
+/* Allow footer animations inside the Order page
+   The Order page intentionally disables transforms/animations for interactive stability,
+   but that blanket rule prevents ScrollReveal (which uses transforms/opacity) from
+   animating the global footer. Re-enable animations only for the footer so its
+   entrance matches other pages without restoring motion throughout the Order UI. */
+.order-page .footer,
+.order-page .footer * {
+  transition: initial !important;
+  animation: initial !important;
+  transform: initial !important;
+  box-shadow: initial !important;
+  filter: initial !important;
+}
+
 .order-page .modern-container::before,
 .order-page .modern-container::after,
 .order-page .modern-container:hover::before,
@@ -3034,6 +3049,57 @@ body.dark-theme .services__img {
   .footer__copy { display: none; }
 
   /* --------- Prevent overlapping and improve general mobile fluidity --------- */
+
+/* Desktop: place the social icons inline next to the footer logo
+  (adjusted breakpoint for visual parity; temporary debug outline added) */
+@media screen and (min-width: 900px) {
+  /* Ensure the logo row shows logo and socials side-by-side */
+  .footer__logo-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem; /* spacing between logo and social icons */
+    justify-content: flex-start;
+  }
+
+  /* Make social icons sit immediately to the right of the logo */
+  .footer__social-group {
+    justify-content: flex-start;
+    margin: 0; /* rely on gap for spacing */
+  }
+
+  /* Slightly reduce the social icon size on desktop so it lines up with the logo height */
+  .footer__social { font-size: 1.5rem; padding: 0.25rem; }
+}
+/* Increase specificity and add !important to prevent other rules from overriding
+   the desktop layout for the footer logo row and social icons. This targets
+   the logo card inside the footer container so it applies only where the
+   markup places the logo and icons together. */
+@media screen and (min-width: 900px) {
+  /* Debug outline added to `.footer__logo-row` to help locate and inspect layout
+     in the browser. Remove this after verification. */
+  .footer__container .footer__content:nth-child(1) .footer__logo-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    justify-content: flex-start !important;
+    outline: 1px dashed rgba(255,60,60,0.9) !important; /* debug visual */
+    padding: 0.2rem 0.2rem 0.2rem 0 !important;
+  }
+
+  .footer__container .footer__content:nth-child(1) .footer__social-group {
+    display: flex !important;
+    justify-content: flex-start !important;
+    margin: 0 !important;
+    gap: 0.6rem !important;
+  }
+
+  .footer__container .footer__content:nth-child(1) .footer__social {
+    font-size: 1.5rem !important;
+    padding: 0.25rem !important;
+  }
+}
   .l-main .bd-container:not(.home__container) { padding: calc(var(--header-height) + 1.25rem) 1rem 2rem; }
 
   /* Tidy up services grid and cards on small screens */

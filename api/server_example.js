@@ -38,7 +38,52 @@ try {
 }
 
 const app = express();
+
+// Development-friendly Content Security Policy: allow Square sandbox CDN
+// and common third-party hosts used for fonts and icons. Keep this guarded
+// to development; tighten for production.
+const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+const cspDirectives = {
+  defaultSrc: ["'self'"],
+  scriptSrc: [
+    "'self'",
+    'https://sandbox.web.squarecdn.com',
+    'https://unpkg.com',
+    'https://cdn.jsdelivr.net'
+  ],
+  styleSrc: [
+    "'self'",
+    "'unsafe-inline'",
+    'https://fonts.googleapis.com',
+    'https://cdn.jsdelivr.net',
+    'https://unpkg.com',
+    'https://sandbox.web.squarecdn.com'
+  ],
+  imgSrc: ["'self'", 'data:'],
+  fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net', 'data:'],
+  connectSrc: [
+    "'self'",
+    'https://sandbox.web.squarecdn.com',
+    'https://api.squareup.com',
+    'https://connect.squareup.com',
+    'https://pci-connect.squareupsandbox.com',
+    'https://o160250.ingest.sentry.io'
+  ],
+  frameSrc: [
+    'https://sandbox.web.squarecdn.com'
+  ],
+  frameAncestors: ["'none'"]
+};
+
 app.use(helmet());
+if (!isProd) {
+  try {
+    app.use(helmet.contentSecurityPolicy({ directives: cspDirectives }));
+  } catch (e) {
+    console.warn('CSP configuration skipped (helmet version may not support contentSecurityPolicy):', e && e.message);
+  }
+}
+
 app.use(cors());
 // Capture raw body for webhook signature verification
 app.use(express.json({
@@ -55,12 +100,14 @@ app.use(express.static(publicRoot))
 
 const PORT = process.env.PORT || 3000;
 
-// Determine which token to use. Prefer production vars, but if running in sandbox
-// use sandbox-prefixed vars. This lets developers keep sandbox creds separate.
-const envIsSandbox = (process.env.SQUARE_ENVIRONMENT || '').toLowerCase() === 'sandbox';
+// Strict sandbox-only configuration
+// The server will only use sandbox-specific environment variables. This avoids
+// accidentally using production credentials when running locally for testing.
+const envIsSandbox = true; // force sandbox mode
 
-const accessToken = process.env.SQUARE_ACCESS_TOKEN || (envIsSandbox ? process.env.SQUARE_SANDBOX_ACCESS_TOKEN : undefined);
-const webhookSigKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || (envIsSandbox ? process.env.SQUARE_SANDBOX_WEBHOOK_SECRET : undefined);
+// Use only sandbox-scoped environment variables for all Square operations.
+const accessToken = process.env.SQUARE_SANDBOX_ACCESS_TOKEN || undefined;
+const webhookSigKey = process.env.SQUARE_SANDBOX_WEBHOOK_SECRET || undefined;
 
 // Detection state
 if (!accessToken) console.log('No access token found in environment.');
@@ -128,6 +175,47 @@ app.get('/', (req, res) => {
   return res.redirect('/api/health');
 });
 
+// Public config endpoint (safe to expose the client-side app id & location only)
+// This allows the frontend to fetch the Square Application ID and Location ID
+// without embedding secrets in the front-end code. Only non-secret, public
+// values are returned (application id, location id, environment and apiBase).
+app.get('/api/square/config', (req, res) => {
+  try {
+    // Return sandbox-only public identifiers from environment
+    const environment = 'sandbox';
+    const applicationId = process.env.SQUARE_SANDBOX_APP_ID || null;
+    const locationId = process.env.SQUARE_SANDBOX_LOCATION_ID || null;
+    const apiBase = '/api/square';
+
+    // These values are safe to expose to the browser (they are public identifiers,
+    // not secrets). If any are missing, return what we have and let the client
+    // handle the missing values.
+    return res.json({
+      applicationId,
+      locationId,
+      environment,
+      apiBase
+    });
+  } catch (err) {
+    console.error('Failed to return square config:', err && err.message);
+    return res.status(500).json({ error: 'failed to load config' });
+  }
+});
+
+// Convenience alias: return the same sandbox config at /api/config
+app.get('/api/config', (req, res) => {
+  try {
+    const applicationId = process.env.SQUARE_SANDBOX_APP_ID || null;
+    const locationId = process.env.SQUARE_SANDBOX_LOCATION_ID || null;
+    const environment = 'sandbox';
+    const apiBase = '/api/square';
+    return res.json({ applicationId, locationId, environment, apiBase });
+  } catch (err) {
+    console.error('Failed to return /api/config:', err && err.message);
+    return res.status(500).json({ error: 'failed to load config' });
+  }
+});
+
 // Create Order - Complete implementation following Square's official Orders API
 app.post('/api/square/create-order', async (req, res) => {
   try {
@@ -191,7 +279,8 @@ app.post('/api/square/create-order', async (req, res) => {
     // Step 2: Create order with complete details
     const requestBody = {
       order: {
-        locationId: process.env.SQUARE_LOCATION_ID,
+        // Force sandbox location id
+        locationId: process.env.SQUARE_SANDBOX_LOCATION_ID,
         lineItems,
         customerId: customerId || undefined,
         state: 'DRAFT', // DRAFT until payment completes
@@ -285,7 +374,8 @@ app.post('/api/square/process-payment', async (req, res) => {
         currency
       },
       orderId,
-      locationId: process.env.SQUARE_LOCATION_ID,
+      // Force sandbox location id for payment creation
+      locationId: process.env.SQUARE_SANDBOX_LOCATION_ID,
       buyerEmailAddress: customerEmail || undefined,
       note: note || `Online order from ${customerName || 'Customer'}`,
       autocomplete: true, // Auto-capture the payment
@@ -300,7 +390,8 @@ app.post('/api/square/process-payment', async (req, res) => {
     try {
       const orderUpdate = await squareClient.ordersApi.updateOrder(orderId, {
         order: {
-          locationId: process.env.SQUARE_LOCATION_ID,
+          // Force sandbox location id
+          locationId: process.env.SQUARE_SANDBOX_LOCATION_ID,
           state: 'OPEN', // Mark order as open/active
           version: 1
         }
