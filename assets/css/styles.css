@@ -5288,3 +5288,36 @@ html body.order-page .product-card .product-desc {
   margin-left: 0 !important;
 }
 
+/* ------------------------------------------------------------------
+   Disable hover motion for header controls
+   Ensure the theme toggle and cart icon do not translate/scale/rotate on hover.
+   Placed at end so it overrides earlier transform/hover rules.
+   ------------------------------------------------------------------ */
+html body .change-theme,
+html body .cart-button,
+html body .nav__toggle,
+html body #theme-button,
+html body #cart-button {
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+html body .change-theme:hover,
+html body .cart-button:hover,
+html body .nav__toggle:hover,
+html body #theme-button:hover,
+html body #cart-button:hover {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Also prevent any child icons from receiving hover transforms */
+html body .change-theme *,
+html body .cart-button *,
+html body .nav__toggle * {
+  transform: none !important;
+  transition: none !important;
+}
+
+
