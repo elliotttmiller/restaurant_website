@@ -4639,10 +4639,29 @@ body.dark-theme .customize-body::-webkit-scrollbar{ display:none }
   }
 }
 
-/* Slightly reduce the space above the products header itself */
+/* Slightly reduce the space above the products header itself (global) */
 .products__header{ margin-top: 0.6rem !important; padding-top: 0 !important }
 
-/* Very small phones: make it even tighter to match inline controls spacing */
+/* For the Order page we prefer a bit more breathing room and a centered container
+   so the 'Order Online' header reads like a card rather than a cramped line. This
+   is scoped to `.order-page` and placed after the earlier rule to ensure it takes
+   precedence without disturbing other pages. */
+.order-page.section { padding-top: 2rem !important; padding-bottom: 2rem !important }
+.order-page .products__header {
+  /* Plain header — no boxed container. Keep simpler spacing so it reads as part of the page. */
+  margin-top: 1rem !important;
+  padding: 0.5rem 0 !important;
+  text-align: center;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Very small phones: keep it slightly tighter to match inline controls spacing */
 @media screen and (max-width: 480px){
   .order-page.section { padding-top: 1.1rem !important; padding-bottom: 0.8rem !important }
   .products__header{ margin-top: 0.4rem !important }

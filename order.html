@@ -98,9 +98,8 @@
                                             <span class="pickup-badge" aria-hidden="true">Pickup</span>
                                             <div class="pickup-location-copy">43356 County Rd. 112, Sauk Centre, MN</div>
                                         </div>
-                                        <div class="timing-wrap">
-                                            <button class="timing-toggle" id="timing-toggle">ASAP · Pickup in 15 - 25 min ▾</button>
-                                        </div>
+                                        <!-- timing control moved to the checkout modal for a cleaner header -> see modal below -->
+                                        <div class="timing-wrap" aria-hidden="true"></div>
                                     </div>
 
                                     <div class="controls-row">
@@ -217,8 +216,12 @@
         <div class="checkout-modal" id="checkout-modal" aria-hidden="true">
           <div class="checkout-modal__content">
             <button class="checkout-modal__close" id="checkout-modal-close" aria-label="Close checkout modal">&times;</button>
-            <h2>Checkout</h2>
-            <form class="checkout-form" id="checkout-form">
+                        <h2>Checkout</h2>
+                        <!-- Timing control migrated here from the header so users can choose pickup timing during checkout -->
+                        <div class="modal-timing" style="text-align:center; margin-bottom:0.75rem;">
+                            <button class="timing-toggle" id="timing-toggle" aria-haspopup="true" aria-expanded="false">ASAP · Pickup in 15 - 25 min ▾</button>
+                        </div>
+                        <form class="checkout-form" id="checkout-form">
               <label for="checkout-name">Name *</label>
               <input type="text" id="checkout-name" name="name" required>
 
