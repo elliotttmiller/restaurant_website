@@ -3704,6 +3704,51 @@ body.dark-theme .services__img {
   font-family: var(--body-font);
 }
 
+/* --------------------------------------------------------------------------
+   Remove the decorative "card" / outline for the About page content
+   The site previously used a rounded card with background/border/shadow.
+   For a cleaner, more integrated About page we remove that outline while
+   preserving reasonable spacing for the inner copy.
+-----------------------------------------------------------------------------*/
+.about-page__content {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  /* keep modest spacing but remove the card padding used previously */
+  padding: 0.75rem 0 !important;
+  max-width: none !important;
+  margin: 1rem 0 !important;
+}
+
+/* turn off the decorative pseudo-border and hover lift for the about section */
+.about-page__content::before,
+.about-page__content:hover,
+.about-page__content:hover::before {
+  display: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* Explicitly disable transitions and hover behaviors for About content to
+   prevent any movement/animation on mouse hover. This overrides earlier
+   site-wide transition rules and ensures a stable, non-animated layout. */
+.about-page__content {
+  transition: none !important;
+  -webkit-transition: none !important;
+  /* Also disable pointer-triggered animations on children */
+  will-change: auto !important;
+}
+
+.about-page__content *,
+.about-page__content *::before,
+.about-page__content *::after {
+  transition: none !important;
+  -webkit-transition: none !important;
+  transform: none !important;
+}
+
 /*========== CONTACT PAGE ==========*/
 .contact-info-grid {
   display: grid;
@@ -5319,5 +5364,70 @@ html body .nav__toggle * {
   transform: none !important;
   transition: none !important;
 }
+
+
+/* Final, site-end override to absolutely disable any outline/hover for the
+   About page content. Placed at file end so it wins over all previous rules.
+   This will remove background, border, shadow, pseudo-elements and any
+   transition or transform on the content container and its children. */
+body .about-page__content,
+html .about-page__content {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0.5rem 0 !important;
+  margin: 0.5rem 0 !important;
+  transition: none !important;
+  -webkit-transition: none !important;
+  transform: none !important;
+}
+
+body .about-page__content::before,
+body .about-page__content:hover,
+body .about-page__content:hover::before,
+body .about-page__content *,
+body .about-page__content *::before,
+body .about-page__content *::after {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  display: block !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Center-align all paragraph and descriptive content inside the About page
+   so the paragraphs match the visual alignment of the first lead paragraph. */
+body .about-page__content,
+body .about-page__content p,
+body .about-page__content .about-feature,
+body .about-page__content .about-category,
+body .about-page__content .about-bullets,
+body .about-page__content .about-bullets li,
+body .about-page__content .about-bullets li strong,
+body .about-page__content .closing {
+  text-align: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Tweak bullets for centered layout: keep bullets readable while centering text */
+body .about-page__content .about-bullets{
+  list-style-position: inside !important;
+  padding-left: 0.5rem !important;
+}
+
+/* Ensure list items don't inherit left padding that prevents centering */
+body .about-page__content .about-bullets li{
+  display: block;
+}
+
+/* Increase space between the feature list (including 'Honest Pricing') and
+   the closing line so they visually separate more. */
+body .about-page__content .about-bullets{ margin-bottom: 2rem !important; }
+body .about-page__content .closing{ margin-top: 3rem !important; }
 
 
