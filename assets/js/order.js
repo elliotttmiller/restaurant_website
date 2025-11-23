@@ -922,6 +922,56 @@
   // Checkout form: Process payment through Square Web Payments SDK
   function wireCheckout(){
     if(!checkoutForm) return;
+    // Helper: enable/disable Pay Now based on required inputs and Square readiness
+    function updatePayButtonState() {
+      const submitButton = checkoutForm.querySelector('button[type="submit"]') || document.querySelector('.checkout-form__submit');
+      if (!submitButton) return;
+
+      // Required fields
+      const nameInput = document.getElementById('checkout-name') || document.getElementById('customer-name');
+      const phoneInput = document.getElementById('checkout-phone') || document.getElementById('customer-phone');
+      const nameFilled = nameInput && String(nameInput.value || '').trim().length > 0;
+      const phoneFilled = phoneInput && String(phoneInput.value || '').trim().length > 0;
+
+      // Cart totals must be > 0
+      const totals = computeTotals();
+      const hasItems = totals.subtotal > 0;
+
+      // Square readiness (exposed as a getter property)
+      let cardReady = false;
+      try { cardReady = !!(window.SquarePayment && window.SquarePayment.isReady); } catch (e) { cardReady = false; }
+
+      const enabled = nameFilled && phoneFilled && hasItems && cardReady;
+
+      submitButton.disabled = !enabled;
+      submitButton.setAttribute('aria-disabled', (!enabled).toString());
+      submitButton.classList.toggle('disabled', !enabled);
+
+      // Provide a small inline hint when disabled
+      const pm = document.getElementById('payment-message');
+      if (pm) {
+        if (!hasItems) pm.textContent = 'Add items to your cart to enable payment.';
+        else if (!nameFilled || !phoneFilled) pm.textContent = 'Please fill in your name and phone to enable Pay Now.';
+        else if (!cardReady) pm.textContent = 'Payment system initializing — please wait a moment.';
+        else pm.textContent = '';
+      }
+    }
+
+    // Wire live validation to inputs so button state updates while typing
+    const nameField = document.getElementById('checkout-name') || document.getElementById('customer-name');
+    const phoneField = document.getElementById('checkout-phone') || document.getElementById('customer-phone');
+    if (nameField) nameField.addEventListener('input', updatePayButtonState);
+    if (phoneField) phoneField.addEventListener('input', updatePayButtonState);
+
+    // Also update when cart changes (renderCart calls updateCartBadge but not this function)
+    const originalRenderCart = renderCart;
+    renderCart = function(){ originalRenderCart(); updatePayButtonState(); };
+
+    // Poll for Square readiness briefly if SDK initializes asynchronously
+    const readinessInterval = setInterval(() => {
+      try { if (window.SquarePayment && window.SquarePayment.isReady) { updatePayButtonState(); clearInterval(readinessInterval); } } catch (e) {}
+    }, 500);
+
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -932,10 +982,10 @@
         return;
       }
 
-      // Get customer information
-      const customerName = document.getElementById('customer-name')?.value?.trim();
-      const customerPhone = document.getElementById('customer-phone')?.value?.trim();
-      const customerEmail = document.getElementById('customer-email')?.value?.trim();
+  // Get customer information (support both old and new input IDs)
+  const customerName = (document.getElementById('checkout-name') && document.getElementById('checkout-name').value.trim()) || (document.getElementById('customer-name') && document.getElementById('customer-name').value.trim()) || '';
+  const customerPhone = (document.getElementById('checkout-phone') && document.getElementById('checkout-phone').value.trim()) || (document.getElementById('customer-phone') && document.getElementById('customer-phone').value.trim()) || '';
+  const customerEmail = (document.getElementById('checkout-email') && document.getElementById('checkout-email').value.trim()) || (document.getElementById('customer-email') && document.getElementById('customer-email').value.trim()) || '';
 
       // Validate required fields
       if (!customerName || !customerPhone) {
@@ -974,10 +1024,18 @@
   if(submitButton){ submitButton.disabled = true; submitButton.textContent = 'Processing...'; }
 
       try {
-        // Check if Square Payment integration is available and initialized
+        // Ensure the Square card is attached and SDK initialized before proceeding.
+        if (window.SquarePayment && typeof window.SquarePayment.ensureCardAttached === 'function') {
+          try {
+            await window.SquarePayment.ensureCardAttached();
+          } catch (attachErr) {
+            console.error('Failed to attach payment card before checkout:', attachErr);
+            throw new Error('Payment system unavailable. Please wait a moment and try again or call to place your order.');
+          }
+        }
+
+        // Check that the high-level checkout function is available
         if (!window.SquarePayment || typeof window.SquarePayment.handleEcosystemCheckout !== 'function') {
-          // Fallback: Square Payment SDK not loaded or not initialized
-          // This means we need to handle payment differently or show an error
           throw new Error('Payment system is initializing. Please wait a moment and try again.');
         }
 
@@ -1172,7 +1230,8 @@
         } catch (err) {
           console.warn('Failed to attach Square card:', err);
           if (window.SquarePayment && typeof window.SquarePayment.showPaymentMessage === 'function') {
-            window.SquarePayment.showPaymentMessage('Payment system unavailable. Please call to place your order.', 'error');
+            const msg = window.SquarePayment.unavailableMessage || 'Payment system unavailable. Please call us to place your order.';
+            window.SquarePayment.showPaymentMessage(msg, 'error');
           }
         }
 

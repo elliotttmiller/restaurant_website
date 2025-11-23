@@ -72,8 +72,14 @@
   // API endpoint configuration
   const API_BASE_URL = SQUARE_ECOSYSTEM.apiBase;
 
+  // Centralized customer-facing message used when payments are unavailable.
+  // Keep a phone number in the message to make it easy for customers to call.
+  const PAYMENT_UNAVAILABLE_MSG = 'Payment system is currently unavailable. Please call us to place your order: (320) 351-3505.';
+
   let payments;
   let card;
+  // Runtime readiness flag (updated when payments + card are attached)
+  window.__square_is_ready = false;
 
   /**
    * Initialize Square Web Payments SDK
@@ -87,28 +93,45 @@
     // initialize the client SDK. Use the short alias `/api/config` so that
     // callers don't need to know the internal API base path.
     try {
-      const cfgResp = await fetch('/api/config');
-      if (!cfgResp || !cfgResp.ok) {
-        console.error('Failed to fetch Square config from server');
-        return false;
+      // Primary approach: try server-provided config (recommended)
+      let cfg = null;
+      try {
+        const cfgResp = await fetch('/api/config');
+        if (cfgResp && cfgResp.ok) cfg = await cfgResp.json();
+      } catch (e) {
+        // server endpoint not available in this environment - fall through to client fallback
       }
 
-      const cfg = await cfgResp.json();
+      // Client-side fallback: allow developers to provide a sandbox app id via
+      // a meta tag or global variable when the server endpoint isn't present.
       if (!cfg || !cfg.applicationId) {
-        console.error('Square config missing applicationId (sandbox app id)');
+        const metaApp = document.querySelector('meta[name="square-app-id"]');
+        const metaLoc = document.querySelector('meta[name="square-location-id"]');
+        const globalApp = window.SQUARE_SANDBOX_APP_ID || window.SQUARE_APP_ID || null;
+        const globalLoc = window.SQUARE_SANDBOX_LOCATION_ID || window.SQUARE_LOCATION_ID || null;
+
+        cfg = cfg || {};
+        cfg.applicationId = cfg.applicationId || (metaApp && metaApp.content) || globalApp || null;
+        cfg.locationId = cfg.locationId || (metaLoc && metaLoc.content) || globalLoc || cfg.locationId || null;
+        cfg.environment = cfg.environment || (window.SQUARE_ENVIRONMENT || SQUARE_ECOSYSTEM.environment);
+      }
+
+      if (!cfg || !cfg.applicationId) {
+        console.error('Square config missing applicationId (sandbox app id). Provide /api/config or a meta tag/meta variable.');
         return false;
       }
 
-      // Apply sandbox config values
+      // Apply config values
       SQUARE_CONFIG.applicationId = cfg.applicationId;
       SQUARE_CONFIG.locationId = cfg.locationId || SQUARE_CONFIG.locationId;
       SQUARE_ECOSYSTEM.environment = cfg.environment || SQUARE_ECOSYSTEM.environment;
 
-      // Initialize payments using the sandbox app id and location id
+      // Initialize payments using the configured app id and location id
       payments = window.Square.payments(
         SQUARE_CONFIG.applicationId,
         SQUARE_CONFIG.locationId
       );
+      // Do not mark ready until card is attached
       return true;
     } catch (error) {
       console.error('Failed to initialize Square Payments:', error);
@@ -122,7 +145,32 @@
   async function initializeCard() {
     try {
       card = await payments.card();
-      await card.attach('#card-container');
+
+      // Try to attach to the inline container first, then fallback to modal container
+      const possibleSelectors = ['#card-container', '#checkout-card'];
+      let attached = false;
+      for (const sel of possibleSelectors) {
+        const el = document.querySelector(sel);
+        if (!el) continue;
+        try {
+          await card.attach(sel);
+          attached = true;
+          // mark ready when a card is attached
+          window.__square_is_ready = true;
+          break;
+        } catch (attachErr) {
+          // If attach failed for this selector, try the next one
+          console.warn(`Square card attach failed for ${sel}:`, attachErr && attachErr.message);
+          continue;
+        }
+      }
+
+      if (!attached) {
+        const err = new Error('No card container element found to attach Square card');
+        window.__square_is_ready = false;
+        throw err;
+      }
+
       return card;
     } catch (error) {
       console.error('Failed to initialize card payment method:', error);
@@ -248,25 +296,30 @@
    * This function should be called after DOM is loaded
    */
   async function initialize() {
-    // Check if we're on the order page
-    if (!document.getElementById('card-container')) {
-      return; // Not on order page, skip initialization
-    }
+    // Check if we're on a page with any Square card container (index or modal)
+
+      // Check if we're on a page with any Square card container (inline or modal)
+      const hasInline = !!document.getElementById('card-container');
+      const hasModal = !!document.getElementById('checkout-card');
+      if (!hasInline && !hasModal) {
+        return; // No card container on this page, skip initialization
+      }
+
 
     try {
       const initialized = await initializeSquarePayments();
       if (!initialized) {
-        showPaymentMessage('Payment system initialization failed. Please refresh the page or contact us.', 'error');
+        showPaymentMessage(PAYMENT_UNAVAILABLE_MSG, 'error');
         return;
       }
 
-      // Initialize card payment method
+      // Initialize card payment method (initializeCard will try inline then modal)
       await initializeCard();
-      
+
       console.log('Square payment integration initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Square payments:', error);
-      showPaymentMessage('Payment system is currently unavailable. Please call us to place your order.', 'error');
+      showPaymentMessage(PAYMENT_UNAVAILABLE_MSG, 'error');
     }
   }
 
@@ -539,8 +592,11 @@
       // Card attached to modal; tokenization and payment are handled by
       // the higher-level ecosystem checkout flow (window.SquarePayment.handleEcosystemCheckout)
       // so we do not add a duplicate form submit listener here.
+      // mark ready when card is attached to the checkout modal
+      window.__square_is_ready = true;
     } catch (error) {
       console.error('Failed to initialize card payment:', error);
+      window.__square_is_ready = false;
     }
   }
 
@@ -560,9 +616,12 @@
 
         // Attach card to the checkout modal container
         await initializeCardPayment();
+        // ensureCardAttached succeeded - mark ready
+        window.__square_is_ready = !!card;
         return card;
       } catch (err) {
         console.error('ensureCardAttached error:', err);
+        window.__square_is_ready = false;
         throw err;
       }
     }
@@ -589,8 +648,17 @@
     
     // Configuration access
     getConfig: () => SQUARE_ECOSYSTEM,
-    ensureCardAttached
+    ensureCardAttached,
+    // Expose the canonical unavailable message so other scripts can use the same copy
+    unavailableMessage: PAYMENT_UNAVAILABLE_MSG
   };
+
+  // Expose a simple runtime helper for other scripts to check readiness
+  Object.defineProperty(window.SquarePayment, 'isReady', {
+    enumerable: true,
+    configurable: false,
+    get: function(){ return !!window.__square_is_ready; }
+  });
 
   // Auto-initialize when DOM is ready
   if (document.readyState === 'loading') {
@@ -598,11 +666,6 @@
   } else {
     initialize();
   }
-
-  // Initialize Square Payments and card payment method for checkout modal
-  initializeSquarePayments().then((success) => {
-    if (success) {
-      initializeCardPayment();
-    }
-  });
 })();
+
+
