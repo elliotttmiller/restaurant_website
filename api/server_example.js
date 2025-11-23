@@ -260,7 +260,7 @@ app.post('/api/square/process-payment', async (req, res) => {
     if (DEMO_MODE) {
       // Simulate successful payment
       const fakePaymentId = `DEMO-PAY-${Date.now()}`;
-      updateOrderStatus(orderId, 'PAID', { paymentId: fakePaymentId });
+      updateOrderStatus(orderId, 'OPEN', { paymentId: fakePaymentId, paymentStatus: 'COMPLETED' });
       return res.json({ 
         success: true, 
         orderId, 
@@ -306,8 +306,8 @@ app.post('/api/square/process-payment', async (req, res) => {
       // Non-critical - payment succeeded
     }
 
-    // Update local database
-    updateOrderStatus(orderId, 'PAID', { 
+    // Update local database with order status
+    updateOrderStatus(orderId, 'OPEN', { 
       paymentId: payment.id,
       paymentStatus: payment.status,
       receiptUrl: payment.receiptUrl,
@@ -729,14 +729,14 @@ app.post('/api/square/webhook', (req, res) => {
         if (payment) {
           const orderId = payment.order_id || payment.orderId || (Array.isArray(payment.order_ids) && payment.order_ids[0]) || (payment.order && payment.order.id) || null;
           const status = (payment.status || '').toUpperCase();
-          const paidStatuses = ['COMPLETED', 'CAPTURED', 'PAID', 'APPROVED'];
+          const paidStatuses = ['COMPLETED', 'CAPTURED', 'APPROVED'];
           if (orderId) {
             if (paidStatuses.includes(status)) {
-              updateOrderStatus(orderId, 'PAID', { paymentId: payment.id, rawStatus: status });
-              console.log(`Order ${orderId} marked as PAID (payment ${payment.id})`);
+              updateOrderStatus(orderId, 'OPEN', { paymentId: payment.id, paymentStatus: status });
+              console.log(`Order ${orderId} marked as OPEN (payment ${payment.id} status: ${status})`);
             } else {
-              updateOrderStatus(orderId, status || 'PENDING', { paymentId: payment.id });
-              console.log(`Order ${orderId} updated with status ${status}`);
+              updateOrderStatus(orderId, 'DRAFT', { paymentId: payment.id, paymentStatus: status });
+              console.log(`Order ${orderId} remains DRAFT (payment status: ${status})`);
             }
           } else {
             console.log('Payment event received but no order ID found in payload');

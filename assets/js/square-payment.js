@@ -431,8 +431,14 @@
       // Step 1: Check inventory availability
       const inventoryCheck = await checkInventoryAvailability(cartData.items);
       if (!inventoryCheck.available) {
-        const unavailableNames = inventoryCheck.items.map(i => i.name).join(', ');
-        throw new Error(`Some items are no longer available: ${unavailableNames}. Please review your cart.`);
+        const unavailableItems = inventoryCheck.items || [];
+        const unavailableNames = unavailableItems
+          .filter(i => i && i.name)
+          .map(i => i.name)
+          .join(', ');
+        throw new Error(unavailableNames 
+          ? `Some items are no longer available: ${unavailableNames}. Please review your cart.`
+          : 'Some items are no longer available. Please review your cart.');
       }
 
       // Step 2: Create or retrieve customer profile

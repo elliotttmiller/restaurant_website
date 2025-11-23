@@ -1074,6 +1074,12 @@
     
     const timing = toggle.dataset.timing || 'default';
     if (timing === 'scheduled' && toggle.dataset.timingValue) {
+      // Validate time format (HH:MM)
+      if (!toggle.dataset.timingValue.match(/^\d{1,2}:\d{2}$/)) {
+        console.warn('Invalid time format, defaulting to ASAP');
+        return 'ASAP';
+      }
+      
       // Return scheduled time in ISO format
       const today = new Date();
       const [hours, minutes] = toggle.dataset.timingValue.split(':');
@@ -1089,7 +1095,7 @@
     if (!orderId) return;
     
     let pollCount = 0;
-    const maxPolls = 20; // Poll for up to 10 minutes (30s intervals)
+    const maxPolls = 20; // Poll for up to 10 minutes (20 polls × 30s = 600s)
     
     const pollInterval = setInterval(async () => {
       pollCount++;
