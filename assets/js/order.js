@@ -435,12 +435,6 @@
             ${descHtml}
           </div>
           <div class="cart-item-right">
-            <div class="cart-qty-wrap" data-id="${item.id}">
-              <button class="cart-qty-btn" aria-haspopup="true" aria-expanded="false" data-id="${item.id}">${item.qty}</button>
-              <div class="cart-qty-menu" role="menu" aria-label="Quantity options" data-id="${item.id}">
-                ${[2,3,4,5,6,7,8,9,10].map(q => `<button class="cart-qty-option" data-id="${item.id}" data-qty="${q}" role="menuitem">${q}</button>`).join('')}
-              </div>
-            </div>
             <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
             <button class="cart-remove" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}"><i class='bx bx-x'></i></button>
           </div>
@@ -448,84 +442,6 @@
         list.appendChild(row);
       });
       cartItemsEl.appendChild(list);
-      // attach qty dropdown behaviour
-      const openMenus = new Set();
-      // Map to suppress duplicate click after a pointer/touch event (prevents double-toggle)
-      const suppressedClicks = new Map();
-
-      cartItemsEl.querySelectorAll('.cart-qty-btn').forEach(btn => {
-        const id = btn.getAttribute('data-id');
-        const wrap = btn.closest('.cart-qty-wrap');
-        const menu = wrap.querySelector('.cart-qty-menu');
-
-        // Common toggle logic
-        const toggleMenuCommon = (e) => {
-          if(e){
-            if (typeof e.preventDefault === 'function') e.preventDefault();
-            if (typeof e.stopPropagation === 'function') e.stopPropagation();
-          }
-          const isOpen = wrap.classList.toggle('open');
-          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-          if(isOpen) openMenus.add(id); else openMenus.delete(id);
-        };
-
-        // Handler for pointer/touch events — set a short-lived flag so the following
-        // click event (synthesized by many browsers) doesn't double-toggle.
-        const pointerHandler = (e) => {
-          suppressedClicks.set(id, Date.now());
-          // visual tap feedback for touch devices (iOS Safari)
-          try {
-            btn.classList.add('pressed');
-            const removePressed = () => {
-              btn.classList.remove('pressed');
-              document.removeEventListener('pointerup', removePressed);
-              document.removeEventListener('touchend', removePressed);
-            };
-            document.addEventListener('pointerup', removePressed, { once: true });
-            document.addEventListener('touchend', removePressed, { once: true });
-            // fallback timeout to ensure the class is removed
-            setTimeout(removePressed, 400);
-          } catch (err) {
-            // ignore DOM errors
-          }
-          toggleMenuCommon(e);
-        };
-
-        // Click handler — ignore if a recent pointer event occurred for this id
-        const clickHandler = (e) => {
-          const last = suppressedClicks.get(id);
-          if(last && (Date.now() - last) < 700){
-            // consume and ignore this click (it followed a pointer/touch)
-            suppressedClicks.delete(id);
-            if (typeof e.stopPropagation === 'function') e.stopPropagation();
-            if (typeof e.preventDefault === 'function') e.preventDefault();
-            return;
-          }
-          toggleMenuCommon(e);
-        };
-
-        // Desktop click
-        btn.addEventListener('click', clickHandler);
-        // Pointer/touch events for mobile devices
-        btn.addEventListener('pointerdown', pointerHandler, {passive:false});
-        btn.addEventListener('touchstart', pointerHandler, {passive:false});
-
-        // pick quantity
-        menu.querySelectorAll('.cart-qty-option').forEach(opt => {
-          opt.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            const qty = parseInt(opt.getAttribute('data-qty'), 10) || 1;
-            const prodId = opt.getAttribute('data-id');
-            updateQty(prodId, qty);
-            // close menu and update button label
-            wrap.classList.remove('open');
-            btn.setAttribute('aria-expanded','false');
-            btn.textContent = String(qty);
-            openMenus.delete(prodId);
-          });
-        });
-      });
-
       // attach remove handlers
       cartItemsEl.querySelectorAll('.cart-remove').forEach(btn => {
         btn.addEventListener('click', () => {
