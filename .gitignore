@@ -1,0 +1,36 @@
+# Node modules
+node_modules/
+api/node_modules/
+
+# dotenv environment files
+.env
+.env.*
+
+# sqlite DB
+api/app_data.sqlite
+api/*.sqlite
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.vscode/
+.idea/
+
+# build/coverage
+dist/
+coverage/
+
+# temporary
+*.tmp
+*.temp
+
+# lockfiles (optional)
+# package-lock.json
+# yarn.lock

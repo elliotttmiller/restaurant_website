@@ -1001,34 +1001,53 @@
       submitButton.textContent = 'Processing...';
 
       try {
-        // Check if Square Payment is available
-        if (window.SquarePayment?.handleCheckout) {
-          // Process payment through Square
-          const result = await window.SquarePayment.handleCheckout(orderData, customerData);
-          
-          if (result.success) {
-            // Payment successful
-            flashCartMessage(`Order placed successfully! Order ID: ${result.orderId}`);
-            window.SquarePayment.showPaymentMessage(
-              `Payment successful! Your order ${result.orderId} has been placed. We'll have it ready for pickup soon!`,
-              'success'
-            );
-            
-            // Clear cart and reset form
-            clearCart();
-            checkoutForm.reset();
-          } else {
-            throw new Error('Payment was not successful');
-          }
-        } else {
-          // Square not available - show demo message
-          // This is the fallback for when Square SDK is not loaded or configured
-          flashCartMessage('Demo Mode: Order would be placed. Configure Square credentials for live payments.');
-          window.SquarePayment?.showPaymentMessage(
-            'Demo mode: Square payment integration needs configuration. Please contact the restaurant to complete your order.',
-            'info'
-          );
+        // Server-side hosted checkout flow (Square Payment Links)
+        // 1) Create an order on the server
+        const createOrderPayload = {
+          items: cartItems,
+          customerName,
+          customerPhone,
+          customerEmail,
+          pickupTime: customerData.pickupTime,
+          note: customerData.note
+        };
+        const createOrderResp = await fetch('/api/square/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(createOrderPayload)
+        });
+        if (!createOrderResp.ok) throw new Error('Failed to create order');
+        const createOrderJson = await createOrderResp.json();
+        const orderId = createOrderJson.orderId || createOrderJson.order_id;
+        if (!orderId) throw new Error('Order creation did not return an orderId');
+
+        // 2) Create a hosted checkout/payment link for that order
+        const redirectUrl = `${location.origin}${location.pathname}?orderId=${encodeURIComponent(orderId)}&payment=complete`;
+        // Convert cartItems to Square line item format
+        const lineItemsForSquare = cartItems.map(i => ({
+          name: i.name,
+          quantity: String(i.quantity || i.qty || 1),
+          basePriceMoney: { amount: Math.round((i.price || 0) * 100), currency: 'USD' }
+        }));
+
+        const checkoutResp = await fetch('/api/square/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, redirectUrl, lineItems: lineItemsForSquare })
+        });
+        if (!checkoutResp.ok) {
+          const errText = await checkoutResp.text();
+          throw new Error('Failed to create checkout link: ' + errText);
         }
+        const checkoutJson = await checkoutResp.json();
+        const paymentLink = checkoutJson.paymentLink || (checkoutJson.raw && checkoutJson.raw.paymentLink && checkoutJson.raw.paymentLink.url);
+        if (!paymentLink) throw new Error('Checkout response did not include a payment link');
+
+        // Clear cart locally then redirect customer to Square-hosted checkout
+        clearCart();
+        checkoutForm.reset();
+        window.location.href = paymentLink;
+      
       } catch (error) {
         console.error('Checkout error:', error);
         const errorMessage = error.message || 'Payment failed. Please try again or call us to place your order.';
