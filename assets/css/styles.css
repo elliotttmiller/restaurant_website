@@ -4965,3 +4965,21 @@ body.dark-theme .button--primary {
     font-size: 1rem;
   }
 }
+
+/* Strong override: enforce two-column product grid on desktop for order page */
+/* This ensures product cards display 2 columns on wide screens and stack
+   to a single column on smaller screens. Using selector specificity so it
+   overrides other generic grid rules. */
+.order-page .products-list-section {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(280px, 1fr)) !important;
+  gap: 0.9rem !important;
+}
+
+@media screen and (max-width: 900px) {
+  .order-page .products-list-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.6rem !important;
+  }
+}
