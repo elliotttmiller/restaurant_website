@@ -536,43 +536,36 @@
       card = await payments.card();
       await card.attach('#checkout-card');
 
-      // Add event listener for form submission
-      const checkoutForm = document.getElementById('checkout-form');
-      checkoutForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        try {
-          const tokenResult = await card.tokenize();
-          if (tokenResult.status === 'OK') {
-            console.log('Card tokenized successfully:', tokenResult.token);
-            // Submit token to server for payment processing
-            const paymentResponse = await fetch(`${API_BASE_URL}${SQUARE_ECOSYSTEM.endpoints.payments}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ token: tokenResult.token })
-            });
-
-            if (paymentResponse.ok) {
-              const paymentResult = await paymentResponse.json();
-              console.log('Payment processed successfully:', paymentResult);
-              alert('Payment successful!');
-            } else {
-              console.error('Payment failed:', paymentResponse.statusText);
-              alert('Payment failed. Please try again.');
-            }
-          } else {
-            console.error('Tokenization failed:', tokenResult.errors);
-            alert('Payment failed. Please check your card details and try again.');
-          }
-        } catch (error) {
-          console.error('Error during payment submission:', error);
-          alert('An error occurred. Please try again.');
-        }
-      });
+      // Card attached to modal; tokenization and payment are handled by
+      // the higher-level ecosystem checkout flow (window.SquarePayment.handleEcosystemCheckout)
+      // so we do not add a duplicate form submit listener here.
     } catch (error) {
       console.error('Failed to initialize card payment:', error);
     }
   }
+
+    /**
+     * Ensure Square payments and card are initialized and attached to the modal.
+     * Safe to call repeatedly; returns once card is ready.
+     */
+    async function ensureCardAttached() {
+      try {
+        if (!payments) {
+          const ok = await initializeSquarePayments();
+          if (!ok) throw new Error('Failed to init Square payments');
+        }
+
+        // If card already initialized and attached, return quickly
+        if (card) return card;
+
+        // Attach card to the checkout modal container
+        await initializeCardPayment();
+        return card;
+      } catch (err) {
+        console.error('ensureCardAttached error:', err);
+        throw err;
+      }
+    }
 
   // Expose public API with ecosystem functions
   window.SquarePayment = {
@@ -595,7 +588,8 @@
     getPrinterStatus,
     
     // Configuration access
-    getConfig: () => SQUARE_ECOSYSTEM
+    getConfig: () => SQUARE_ECOSYSTEM,
+    ensureCardAttached
   };
 
   // Auto-initialize when DOM is ready

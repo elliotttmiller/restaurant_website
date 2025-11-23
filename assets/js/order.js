@@ -968,11 +968,10 @@
         note: '' // Could add a notes field
       };
 
-      // Disable submit button during processing
-      const submitButton = document.getElementById('place-order');
-      const originalText = submitButton.textContent;
-      submitButton.disabled = true;
-      submitButton.textContent = 'Processing...';
+  // Disable the modal submit button during processing
+  const submitButton = (checkoutForm && checkoutForm.querySelector('button[type="submit"]')) || document.getElementById('place-order');
+  const originalText = submitButton ? submitButton.textContent : '';
+  if(submitButton){ submitButton.disabled = true; submitButton.textContent = 'Processing...'; }
 
       try {
         // Check if Square Payment integration is available and initialized
@@ -1035,8 +1034,7 @@
         }
       } finally {
         // Re-enable submit button
-        submitButton.disabled = false;
-        submitButton.textContent = originalText;
+        if(submitButton){ submitButton.disabled = false; submitButton.textContent = originalText; }
       }
     });
   }
@@ -1146,6 +1144,96 @@
     wireCartButton();
     wireTimingToggle();
     wireCategoryTabs();
+
+    // Open checkout modal when the cart 'Checkout' button is clicked
+    if (placeOrderBtn && checkoutModal) {
+      placeOrderBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        // Close cart overlay if open
+        const overlay = document.getElementById('cart-overlay');
+        if (overlay && overlay.classList.contains('open')) {
+          overlay.classList.remove('open');
+          overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        // Remember previously focused element for accessibility
+        const previousFocus = document.activeElement;
+
+        // Show checkout modal with smooth animation
+        document.body.classList.add('modal-open');
+        checkoutModal.setAttribute('aria-hidden', 'false');
+        checkoutModal.classList.add('show-modal');
+
+        // Ensure Square payment card is attached lazily when modal opens
+        try {
+          if (window.SquarePayment && typeof window.SquarePayment.ensureCardAttached === 'function') {
+            await window.SquarePayment.ensureCardAttached();
+          }
+        } catch (err) {
+          console.warn('Failed to attach Square card:', err);
+          if (window.SquarePayment && typeof window.SquarePayment.showPaymentMessage === 'function') {
+            window.SquarePayment.showPaymentMessage('Payment system unavailable. Please call to place your order.', 'error');
+          }
+        }
+
+        // focus management: focus first focusable inside modal
+        const focusableSelector = 'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        const focusable = Array.from(checkoutModal.querySelectorAll(focusableSelector)).filter(el => el.offsetParent !== null);
+        const firstInput = focusable.length ? focusable[0] : null;
+        if (firstInput) setTimeout(() => firstInput.focus(), 60);
+
+        // trap focus inside modal
+        function handleKeyDown(e){
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+            return;
+          }
+          if (e.key === 'Tab') {
+            const focusableElems = focusable;
+            if (!focusableElems.length) return;
+            const currentIndex = focusableElems.indexOf(document.activeElement);
+            if (e.shiftKey) {
+              // Shift + Tab
+              if (currentIndex === 0 || document.activeElement === checkoutModal) {
+                e.preventDefault();
+                focusableElems[focusableElems.length - 1].focus();
+              }
+            } else {
+              // Tab
+              if (currentIndex === focusableElems.length - 1) {
+                e.preventDefault();
+                focusableElems[0].focus();
+              }
+            }
+          }
+        }
+
+        // Close modal helper
+        function closeModal(){
+          checkoutModal.setAttribute('aria-hidden', 'true');
+          checkoutModal.classList.remove('show-modal');
+          document.body.classList.remove('modal-open');
+          document.removeEventListener('keydown', handleKeyDown);
+          // return focus
+          try{ if(previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus(); }catch(e){}
+        }
+
+        // attach keydown listener for trap and escape
+        document.addEventListener('keydown', handleKeyDown);
+
+        // If modal has its own close button, ensure it closes and cleans up
+        const modalClose = checkoutModal.querySelector('.checkout-modal__close');
+        if (modalClose) {
+          modalClose.addEventListener('click', (ev) => { ev.preventDefault(); closeModal(); });
+        }
+
+        // backdrop click already wired earlier to close modal; ensure it removes body class as well
+        checkoutModal.addEventListener('click', function backdropHandler(event){
+          if (event.target === checkoutModal) { closeModal(); checkoutModal.removeEventListener('click', backdropHandler); }
+        });
+      });
+    }
 
     // expose for debugging
     window.__bt_cart = cart;
