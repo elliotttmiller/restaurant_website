@@ -4124,26 +4124,28 @@ body.dark-theme .services__img {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  gap: 1rem;
+  /* keep foot near the top so price aligns across from the product title */
+  margin-top: 0;
+  gap: 0.5rem;
 }
 
 .order-page .product-price {
-  font-size: 1.25rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--first-color);
+  margin-bottom: 0;
 }
 
 .order-page .product-action-btn {
   background: var(--first-color);
   color: var(--body-color);
   border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
+  padding: 0.24rem 0.6rem; /* sleeker: reduced vertical and horizontal padding */
+  border-radius: 6px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
@@ -4796,6 +4798,32 @@ body.dark-theme .cart-qty-option:hover{ background: rgba(255,255,255,0.08); }
     white-space: nowrap;
     margin-right: 0.5rem;
   }
+
+/* Final alignment tweaks for product price and action on order page
+   Placed at end to ensure these tighter rules win over older, broader rules. */
+html body.order-page .products__list .product-card .product-foot,
+html body.order-page .product-card .product-foot {
+  gap: 0.45rem !important;
+  margin-top: 0 !important;
+}
+
+html body.order-page .products__list .product-card .product-price,
+html body.order-page .product-card .product-price {
+  font-size: 0.98rem !important;
+  margin-bottom: 0 !important;
+}
+
+html body.order-page .products__list .product-card .product-action-btn,
+html body.order-page .product-card .product-action-btn {
+  padding: 0.24rem 0.6rem !important;
+  font-size: 0.78rem !important;
+}
+
+/* Ensure buttons remain comfortably tappable on small touch devices */
+@media screen and (max-width: 640px) {
+  .order-page .product-action-btn { padding: 0.5rem 0.9rem; font-size: 0.92rem; }
+  html body.order-page .product-card .product-action-btn { padding: 0.5rem 0.9rem !important; font-size: 0.92rem !important; }
+}
 
   .product-card .product-add-button,
   .product-card .btn-add,
