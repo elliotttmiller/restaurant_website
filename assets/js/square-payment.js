@@ -522,6 +522,58 @@
     }
   }
 
+  /**
+   * Initialize card payment in the checkout modal
+   */
+  async function initializeCardPayment() {
+    if (!payments) {
+      console.error('Square Payments SDK not initialized');
+      return;
+    }
+
+    try {
+      // Create a card payment method and attach it to the checkout modal
+      card = await payments.card();
+      await card.attach('#checkout-card');
+
+      // Add event listener for form submission
+      const checkoutForm = document.getElementById('checkout-form');
+      checkoutForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try {
+          const tokenResult = await card.tokenize();
+          if (tokenResult.status === 'OK') {
+            console.log('Card tokenized successfully:', tokenResult.token);
+            // Submit token to server for payment processing
+            const paymentResponse = await fetch(`${API_BASE_URL}${SQUARE_ECOSYSTEM.endpoints.payments}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: tokenResult.token })
+            });
+
+            if (paymentResponse.ok) {
+              const paymentResult = await paymentResponse.json();
+              console.log('Payment processed successfully:', paymentResult);
+              alert('Payment successful!');
+            } else {
+              console.error('Payment failed:', paymentResponse.statusText);
+              alert('Payment failed. Please try again.');
+            }
+          } else {
+            console.error('Tokenization failed:', tokenResult.errors);
+            alert('Payment failed. Please check your card details and try again.');
+          }
+        } catch (error) {
+          console.error('Error during payment submission:', error);
+          alert('An error occurred. Please try again.');
+        }
+      });
+    } catch (error) {
+      console.error('Failed to initialize card payment:', error);
+    }
+  }
+
   // Expose public API with ecosystem functions
   window.SquarePayment = {
     // Core payment functions
@@ -553,4 +605,10 @@
     initialize();
   }
 
+  // Initialize Square Payments and card payment method for checkout modal
+  initializeSquarePayments().then((success) => {
+    if (success) {
+      initializeCardPayment();
+    }
+  });
 })();

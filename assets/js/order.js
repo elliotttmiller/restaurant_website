@@ -158,6 +158,9 @@
   const checkoutForm = document.getElementById('checkout-form');
   const orderMessage = document.getElementById('order-message');
   const cartButton = document.getElementById('cart-button');
+  const checkoutButton = document.getElementById('checkout-button');
+  const checkoutModal = document.getElementById('checkout-modal');
+  const checkoutModalClose = document.getElementById('checkout-modal-close');
 
   let cart = loadCart();
 
@@ -1107,6 +1110,30 @@
       e.preventDefault();
       clearCart();
       flashCartMessage('Cart cleared');
+    });
+  }
+
+  // Checkout Modal Behavior
+  if (checkoutButton && checkoutModal && checkoutModalClose) {
+    // Open modal on button click
+    checkoutButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      checkoutModal.setAttribute('aria-hidden', 'false');
+      checkoutModal.classList.add('show-modal');
+    });
+
+    // Close modal on close button click
+    checkoutModalClose.addEventListener('click', () => {
+      checkoutModal.setAttribute('aria-hidden', 'true');
+      checkoutModal.classList.remove('show-modal');
+    });
+
+    // Close modal on backdrop click
+    checkoutModal.addEventListener('click', (event) => {
+      if (event.target === checkoutModal) {
+        checkoutModal.setAttribute('aria-hidden', 'true');
+        checkoutModal.classList.remove('show-modal');
+      }
     });
   }
 

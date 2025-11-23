@@ -192,48 +192,48 @@
 
         <!-- Cart Drawer Overlay (site-wide) -->
         <div id="cart-overlay" class="cart-overlay" aria-hidden="true">
-            <div class="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
+          <div class="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping cart">
 
-                <div class="cart__header">
-                    <h3>Your Order</h3>
-                    <button id="clear-cart" class="button">Clear</button>
-                </div>
-
-                <div id="cart-items" class="cart__items" aria-live="polite">
-                    <p class="muted">Your cart is empty</p>
-                </div>
-
-                <div class="cart__totals">
-                    <div class="cart__row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
-                    <div class="cart__row"><span>Tax (6%)</span><span id="cart-tax">$0.00</span></div>
-                    <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
-                </div>
-
-                <form id="checkout-form" class="checkout-form" novalidate>
-                    <fieldset>
-                        <legend>Contact Information</legend>
-                        <label for="customer-name">Name *</label>
-                        <input id="customer-name" name="name" type="text" required placeholder="Your full name" autocomplete="name">
-
-                        <label for="customer-phone">Phone *</label>
-                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212" autocomplete="tel">
-
-                        <label for="customer-email">Email (Optional)</label>
-                        <input id="customer-email" name="email" type="email" placeholder="your@email.com" autocomplete="email">
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Payment Information</legend>
-                        <!-- Square Card Payment Form -->
-                        <div id="card-container"></div>
-                        <div id="payment-message" class="payment-message" role="alert" aria-live="assertive"></div>
-                    </fieldset>
-
-                    <button id="place-order" class="button button--primary" type="submit">Complete Order & Pay</button>
-                </form>
-
-                <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
+            <div class="cart__header">
+              <h3>Your Order</h3>
+              <button id="clear-cart" class="button">Clear</button>
             </div>
+
+            <div id="cart-items" class="cart__items" aria-live="polite">
+              <p class="muted">Your cart is empty</p>
+            </div>
+
+            <div class="cart__totals">
+              <div class="cart__row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
+              <div class="cart__row"><span>Tax (6%)</span><span id="cart-tax">$0.00</span></div>
+              <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
+            </div>
+
+                    <button id="place-order" class="button button--primary" type="button">Checkout</button>
+          </div>
+        </div>
+
+        <!-- Checkout Modal -->
+        <div class="checkout-modal" id="checkout-modal" aria-hidden="true">
+          <div class="checkout-modal__content">
+            <button class="checkout-modal__close" id="checkout-modal-close" aria-label="Close checkout modal">&times;</button>
+            <h2>Checkout</h2>
+            <form class="checkout-form" id="checkout-form">
+              <label for="checkout-name">Name *</label>
+              <input type="text" id="checkout-name" name="name" required>
+
+              <label for="checkout-phone">Phone *</label>
+              <input type="tel" id="checkout-phone" name="phone" required>
+
+              <label for="checkout-email">Email (Optional)</label>
+              <input type="email" id="checkout-email" name="email">
+
+              <label for="checkout-card">Payment Information</label>
+              <div id="checkout-card"></div>
+
+              <button type="submit" class="checkout-form__submit">Submit Payment</button>
+            </form>
+          </div>
         </div>
 
         <!--========== SCROLL REVEAL ==========-->
