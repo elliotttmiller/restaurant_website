@@ -135,32 +135,29 @@
 
   /**
    * Process payment with Square
-   * @param {string} sourceId - Payment token from Square
-   * @param {object} orderData - Order details including items and customer info
+   * @param {object} paymentData - Payment details including sourceId, amount, orderId
    */
-  async function processPayment(sourceId, orderData) {
+  async function processPayment(paymentData) {
     try {
-      // In a production environment, this would be a server-side API call
-      // The server would use the Square API to create a payment
       const response = await fetch(`${API_BASE_URL}/process-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sourceId,
-          amount: orderData.totalCents,
-          currency: 'USD',
-          orderId: orderData.orderId,
-          customerName: orderData.customerName,
-          customerPhone: orderData.customerPhone,
-          items: orderData.items,
-          note: orderData.note || 'Online order from The Bear Trap'
+          sourceId: paymentData.sourceId,
+          amount: paymentData.amount,
+          currency: paymentData.currency || 'USD',
+          orderId: paymentData.orderId,
+          customerName: paymentData.customerName,
+          customerEmail: paymentData.customerEmail,
+          note: paymentData.note || 'Online order from The Bear Trap'
         })
       });
 
       if (!response.ok) {
-        throw new Error('Payment processing failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Payment processing failed');
       }
 
       const result = await response.json();
@@ -177,8 +174,6 @@
    */
   async function createSquareOrder(orderData) {
     try {
-      // In production, this would call your server-side API
-      // which would use Square Orders API to create an order
       const response = await fetch(`${API_BASE_URL}/create-order`, {
         method: 'POST',
         headers: {
@@ -188,13 +183,15 @@
           items: orderData.items,
           customerName: orderData.customerName,
           customerPhone: orderData.customerPhone,
+          customerEmail: orderData.customerEmail,
           pickupTime: orderData.pickupTime || 'ASAP',
           note: orderData.note || ''
         })
       });
 
       if (!response.ok) {
-        throw new Error('Order creation failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Order creation failed');
       }
 
       const result = await response.json();
@@ -203,59 +200,6 @@
       console.error('Order creation error:', error);
       throw error;
     }
-  }
-
-  /**
-   * Handle the complete checkout process
-   * @param {object} cartData - Cart items and totals
-   * @param {object} customerData - Customer information
-   */
-  async function handleCheckout(cartData, customerData) {
-    try {
-      // Step 1: Tokenize the card
-      const cardToken = await tokenizeCard();
-
-      // Step 2: Prepare order data
-      const orderData = {
-        orderId: generateOrderId(),
-        items: cartData.items,
-        subtotal: cartData.subtotal,
-        tax: cartData.tax,
-        total: cartData.total,
-        totalCents: Math.round(cartData.total * 100), // Convert to cents
-        customerName: customerData.name,
-        customerPhone: customerData.phone,
-        pickupTime: customerData.pickupTime || 'ASAP',
-        note: customerData.note || ''
-      };
-
-      // Step 3: Create order in Square
-      const order = await createSquareOrder(orderData);
-
-      // Step 4: Process payment
-      const payment = await processPayment(cardToken, {
-        ...orderData,
-        orderId: order.orderId || orderData.orderId
-      });
-
-      return {
-        success: true,
-        orderId: payment.orderId || order.orderId,
-        payment: payment
-      };
-    } catch (error) {
-      console.error('Checkout error:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Generate unique order ID
-   */
-  function generateOrderId() {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 9);
-    return `BT-${timestamp}-${random}`.toUpperCase();
   }
 
   /**
@@ -487,44 +431,58 @@
       // Step 1: Check inventory availability
       const inventoryCheck = await checkInventoryAvailability(cartData.items);
       if (!inventoryCheck.available) {
-        throw new Error('Some items are no longer available. Please review your cart.');
+        const unavailableItems = inventoryCheck.items || [];
+        const unavailableNames = unavailableItems
+          .filter(i => i && i.name)
+          .map(i => i.name)
+          .join(', ');
+        throw new Error(unavailableNames 
+          ? `Some items are no longer available: ${unavailableNames}. Please review your cart.`
+          : 'Some items are no longer available. Please review your cart.');
       }
 
       // Step 2: Create or retrieve customer profile
       const customer = await manageCustomer(customerData);
       const customerId = customer?.customerId || null;
 
-      // Step 3: Tokenize the card
-      const cardToken = await tokenizeCard();
-
-      // Step 4: Prepare order data with customer ID
+      // Step 3: Create order in Square first (before payment)
       const orderData = {
-        orderId: generateOrderId(),
         items: cartData.items,
-        subtotal: cartData.subtotal,
-        tax: cartData.tax,
-        total: cartData.total,
-        totalCents: Math.round(cartData.total * 100),
         customerName: customerData.name,
         customerPhone: customerData.phone,
         customerEmail: customerData.email,
-        customerId: customerId,
         pickupTime: customerData.pickupTime || 'ASAP',
         note: customerData.note || ''
       };
 
-      // Step 5: Create order in Square
       const order = await createSquareOrder(orderData);
+      if (!order.success || !order.orderId) {
+        throw new Error('Failed to create order');
+      }
 
-      // Step 6: Process payment
-      const payment = await processPayment(cardToken, {
-        ...orderData,
-        orderId: order.orderId || orderData.orderId
-      });
+      // Step 4: Tokenize the card using Square Web Payments SDK
+      const cardToken = await tokenizeCard();
 
-      // Step 7: Send to printer (if hardware configured)
+      // Step 5: Process payment with the tokenized card
+      const paymentData = {
+        sourceId: cardToken,
+        amount: Math.round(cartData.total * 100), // Convert to cents
+        currency: 'USD',
+        orderId: order.orderId,
+        customerName: customerData.name,
+        customerEmail: customerData.email,
+        note: `Online order for ${customerData.name}`
+      };
+
+      const payment = await processPayment(paymentData);
+
+      if (!payment.success) {
+        throw new Error(payment.error || 'Payment processing failed');
+      }
+
+      // Step 6: Send to printer (if hardware configured) - non-blocking
       try {
-        await printOrderTicket(payment.orderId, 'kitchen');
+        await printOrderTicket(order.orderId, 'kitchen');
       } catch (e) {
         // Printer not configured - continue without printing
         console.log('Printer not available:', e.message);
@@ -532,7 +490,7 @@
 
       return {
         success: true,
-        orderId: payment.orderId || order.orderId,
+        orderId: order.orderId,
         customerId: customerId,
         payment: payment
       };
@@ -546,14 +504,15 @@
   window.SquarePayment = {
     // Core payment functions
     initialize,
-    handleCheckout,
     tokenizeCard,
     processPayment,
     createSquareOrder,
     showPaymentMessage,
     
-    // Ecosystem extensions
+    // Main checkout function (ecosystem-aware)
     handleEcosystemCheckout,
+    
+    // Additional ecosystem functions
     manageCustomer,
     checkInventoryAvailability,
     syncCatalog,

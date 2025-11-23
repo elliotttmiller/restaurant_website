@@ -123,7 +123,7 @@ app.get('/', (req, res) => {
   return res.redirect('/api/health');
 });
 
-// Create Order
+// Create Order - Complete implementation following Square's official Orders API
 app.post('/api/square/create-order', async (req, res) => {
   try {
     const { items, customerName, customerPhone, customerEmail, pickupTime, note } = req.body || {};
@@ -139,23 +139,70 @@ app.post('/api/square/create-order', async (req, res) => {
       // Simulate an order creation
       const fakeOrderId = `DEMO-${Date.now()}`;
       idempotencyStore.set(idempotencyKey, { orderId: fakeOrderId });
-        // persist demo order record
-        persistOrderRecord({ orderId: fakeOrderId, items: lineItems, status: 'PENDING', createdAt: new Date().toISOString() });
-        return res.json({ success: true, orderId: fakeOrderId, idempotencyKey, demo: true });
+      persistOrderRecord({ orderId: fakeOrderId, items: lineItems, status: 'DRAFT', createdAt: new Date().toISOString() });
+      return res.json({ 
+        success: true, 
+        orderId: fakeOrderId, 
+        idempotencyKey, 
+        demo: true,
+        totalMoney: { amount: items.reduce((sum, i) => sum + (i.price * i.quantity * 100), 0), currency: 'USD' }
+      });
     }
 
-    // Production path using Square
+    // Production path using Square Orders API
+    // Step 1: Create or retrieve customer (if phone provided)
+    let customerId = null;
+    if (customerPhone && squareClient.customersApi) {
+      try {
+        const customerSearch = await squareClient.customersApi.searchCustomers({
+          query: {
+            filter: {
+              phoneNumber: {
+                exact: customerPhone
+              }
+            }
+          }
+        });
+
+        if (customerSearch.result.customers && customerSearch.result.customers.length > 0) {
+          customerId = customerSearch.result.customers[0].id;
+        } else if (customerName) {
+          // Create new customer
+          const nameParts = customerName.split(' ');
+          const customerCreate = await squareClient.customersApi.createCustomer({
+            givenName: nameParts[0],
+            familyName: nameParts.slice(1).join(' ') || undefined,
+            phoneNumber: customerPhone,
+            emailAddress: customerEmail || undefined
+          });
+          customerId = customerCreate.result.customer.id;
+        }
+      } catch (custErr) {
+        console.warn('Customer creation/lookup error:', custErr.message);
+        // Continue without customer ID - non-critical
+      }
+    }
+
+    // Step 2: Create order with complete details
     const requestBody = {
       order: {
         locationId: process.env.SQUARE_LOCATION_ID,
         lineItems,
+        customerId: customerId || undefined,
+        state: 'DRAFT', // DRAFT until payment completes
         fulfillments: [
           {
             type: 'PICKUP',
             state: 'PROPOSED',
             pickupDetails: {
-              recipient: { displayName: customerName },
-              pickupAt: pickupTime === 'ASAP' ? undefined : pickupTime
+              recipient: { 
+                displayName: customerName || 'Customer',
+                phoneNumber: customerPhone || undefined,
+                emailAddress: customerEmail || undefined
+              },
+              pickupAt: (pickupTime && pickupTime !== 'ASAP') ? pickupTime : undefined,
+              note: note || undefined,
+              scheduleType: (pickupTime && pickupTime !== 'ASAP') ? 'SCHEDULED' : 'ASAP'
             }
           }
         ]
@@ -164,21 +211,45 @@ app.post('/api/square/create-order', async (req, res) => {
     };
 
     const { result } = await squareClient.ordersApi.createOrder(requestBody);
-    const orderId = result && result.order && result.order.id;
+    const order = result.order;
+    const orderId = order.id;
+    
     idempotencyStore.set(idempotencyKey, { orderId });
-    // persist created order
-    persistOrderRecord({ orderId, items: lineItems, status: 'PENDING', createdAt: new Date().toISOString() });
-    return res.json({ success: true, orderId, idempotencyKey });
+    
+    // Persist created order with full details
+    persistOrderRecord({ 
+      orderId, 
+      items: lineItems, 
+      status: 'DRAFT',
+      createdAt: new Date().toISOString(),
+      meta: {
+        customerId,
+        totalMoney: order.totalMoney,
+        totalTaxMoney: order.totalTaxMoney,
+        totalDiscountMoney: order.totalDiscountMoney,
+        totalServiceChargeMoney: order.totalServiceChargeMoney
+      }
+    });
+    
+    return res.json({ 
+      success: true, 
+      orderId,
+      customerId,
+      idempotencyKey,
+      totalMoney: order.totalMoney,
+      totalTaxMoney: order.totalTaxMoney,
+      totalDiscountMoney: order.totalDiscountMoney
+    });
   } catch (error) {
     console.error('Order creation error:', error);
     return res.status(500).json({ success: false, error: error.message || 'unknown error' });
   }
 });
 
-// Process Payment
+// Process Payment - Complete implementation following Square's official Payments API
 app.post('/api/square/process-payment', async (req, res) => {
   try {
-    const { sourceId, amount, currency = 'USD', orderId, customerEmail, note } = req.body || {};
+    const { sourceId, amount, currency = 'USD', orderId, customerEmail, customerName, note } = req.body || {};
 
     if (!sourceId || !amount || !orderId) {
       return res.status(400).json({ success: false, error: 'sourceId, amount and orderId are required' });
@@ -189,9 +260,18 @@ app.post('/api/square/process-payment', async (req, res) => {
     if (DEMO_MODE) {
       // Simulate successful payment
       const fakePaymentId = `DEMO-PAY-${Date.now()}`;
-      return res.json({ success: true, orderId, paymentId: fakePaymentId, receiptUrl: null, demo: true });
+      updateOrderStatus(orderId, 'OPEN', { paymentId: fakePaymentId, paymentStatus: 'COMPLETED' });
+      return res.json({ 
+        success: true, 
+        orderId, 
+        paymentId: fakePaymentId, 
+        receiptUrl: `https://squareup.com/receipt/preview/${fakePaymentId}`,
+        status: 'COMPLETED',
+        demo: true 
+      });
     }
 
+    // Production path using Square Payments API
     const paymentBody = {
       sourceId,
       idempotencyKey,
@@ -201,15 +281,349 @@ app.post('/api/square/process-payment', async (req, res) => {
       },
       orderId,
       locationId: process.env.SQUARE_LOCATION_ID,
-      buyerEmailAddress: customerEmail,
-      note
+      buyerEmailAddress: customerEmail || undefined,
+      note: note || `Online order from ${customerName || 'Customer'}`,
+      autocomplete: true, // Auto-capture the payment
+      referenceId: orderId // Link payment to order
     };
 
+    // Create payment
     const { result } = await squareClient.paymentsApi.createPayment(paymentBody);
-    const payment = result && result.payment;
-    return res.json({ success: true, orderId, paymentId: payment && payment.id, receiptUrl: payment && payment.receiptUrl });
+    const payment = result.payment;
+
+    // Update order state to OPEN after successful payment
+    try {
+      const orderUpdate = await squareClient.ordersApi.updateOrder(orderId, {
+        order: {
+          locationId: process.env.SQUARE_LOCATION_ID,
+          state: 'OPEN', // Mark order as open/active
+          version: 1
+        }
+      });
+      console.log(`Order ${orderId} updated to OPEN state`);
+    } catch (updateErr) {
+      console.warn('Order state update error:', updateErr.message);
+      // Non-critical - payment succeeded
+    }
+
+    // Update local database with order status
+    updateOrderStatus(orderId, 'OPEN', { 
+      paymentId: payment.id,
+      paymentStatus: payment.status,
+      receiptUrl: payment.receiptUrl,
+      receiptNumber: payment.receiptNumber
+    });
+
+    return res.json({ 
+      success: true, 
+      orderId, 
+      paymentId: payment.id, 
+      receiptUrl: payment.receiptUrl,
+      receiptNumber: payment.receiptNumber,
+      status: payment.status,
+      totalMoney: payment.totalMoney,
+      approvedMoney: payment.approvedMoney
+    });
   } catch (error) {
     console.error('Payment processing error:', error);
+    
+    // Update order status to failed
+    if (orderId) {
+      updateOrderStatus(orderId, 'PAYMENT_FAILED', { error: error.message });
+    }
+    
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || 'unknown error',
+      errors: error.errors || []
+    });
+  }
+});
+
+// Get Order Status - Real-time order status tracking
+app.get('/api/square/order-status/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'orderId is required' });
+    }
+
+    if (DEMO_MODE) {
+      // Return demo order status
+      const localOrder = db.getOrder(orderId);
+      return res.json({
+        success: true,
+        orderId,
+        status: localOrder ? localOrder.status : 'PENDING',
+        state: localOrder ? localOrder.status : 'PENDING',
+        demo: true
+      });
+    }
+
+    // Fetch order from Square
+    const { result } = await squareClient.ordersApi.retrieveOrder(orderId);
+    const order = result.order;
+
+    // Update local database
+    updateOrderStatus(orderId, order.state, {
+      version: order.version,
+      updatedAt: order.updatedAt,
+      closedAt: order.closedAt
+    });
+
+    return res.json({
+      success: true,
+      orderId: order.id,
+      status: order.state,
+      state: order.state,
+      fulfillments: order.fulfillments,
+      totalMoney: order.totalMoney,
+      version: order.version,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      closedAt: order.closedAt
+    });
+  } catch (error) {
+    console.error('Order status retrieval error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'unknown error' });
+  }
+});
+
+// Update Order Status - For staff/admin to update order fulfillment
+app.post('/api/square/update-order-status', async (req, res) => {
+  try {
+    const { orderId, status, fulfillmentState } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({ success: false, error: 'orderId and status are required' });
+    }
+
+    if (DEMO_MODE) {
+      updateOrderStatus(orderId, status);
+      return res.json({ success: true, orderId, status, demo: true });
+    }
+
+    // Get current order version
+    const { result: retrieveResult } = await squareClient.ordersApi.retrieveOrder(orderId);
+    const currentOrder = retrieveResult.order;
+
+    // Update order state
+    const updateBody = {
+      order: {
+        locationId: process.env.SQUARE_LOCATION_ID,
+        version: currentOrder.version,
+        state: status
+      }
+    };
+
+    // If fulfillment state is provided, update it
+    if (fulfillmentState && currentOrder.fulfillments && currentOrder.fulfillments.length > 0) {
+      updateBody.order.fulfillments = currentOrder.fulfillments.map(f => ({
+        ...f,
+        state: fulfillmentState
+      }));
+    }
+
+    const { result } = await squareClient.ordersApi.updateOrder(orderId, updateBody);
+    
+    updateOrderStatus(orderId, status, { updatedAt: new Date().toISOString() });
+
+    return res.json({
+      success: true,
+      orderId: result.order.id,
+      status: result.order.state,
+      version: result.order.version
+    });
+  } catch (error) {
+    console.error('Order status update error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'unknown error' });
+  }
+});
+
+// Manage Customer - Create or update customer profile
+app.post('/api/square/manage-customer', async (req, res) => {
+  try {
+    const { phoneNumber, emailAddress, givenName, familyName, note } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({ success: false, error: 'phoneNumber is required' });
+    }
+
+    if (DEMO_MODE) {
+      return res.json({
+        success: true,
+        customerId: `DEMO-CUST-${Date.now()}`,
+        demo: true
+      });
+    }
+
+    // Search for existing customer by phone
+    const searchResult = await squareClient.customersApi.searchCustomers({
+      query: {
+        filter: {
+          phoneNumber: {
+            exact: phoneNumber
+          }
+        }
+      }
+    });
+
+    let customer;
+    if (searchResult.result.customers && searchResult.result.customers.length > 0) {
+      // Customer exists - update if needed
+      customer = searchResult.result.customers[0];
+      
+      // Only update if new information provided
+      if (emailAddress || givenName || familyName || note) {
+        const updateResult = await squareClient.customersApi.updateCustomer(customer.id, {
+          emailAddress: emailAddress || customer.emailAddress,
+          givenName: givenName || customer.givenName,
+          familyName: familyName || customer.familyName,
+          note: note || customer.note
+        });
+        customer = updateResult.result.customer;
+      }
+    } else {
+      // Create new customer
+      const createResult = await squareClient.customersApi.createCustomer({
+        givenName,
+        familyName,
+        phoneNumber,
+        emailAddress,
+        note
+      });
+      customer = createResult.result.customer;
+    }
+
+    return res.json({
+      success: true,
+      customerId: customer.id,
+      givenName: customer.givenName,
+      familyName: customer.familyName,
+      emailAddress: customer.emailAddress,
+      phoneNumber: customer.phoneNumber
+    });
+  } catch (error) {
+    console.error('Customer management error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'unknown error' });
+  }
+});
+
+// Check Inventory Availability
+app.post('/api/square/check-availability', async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ success: false, error: 'items array is required' });
+    }
+
+    if (DEMO_MODE) {
+      // Simulate all items available
+      return res.json({
+        success: true,
+        available: true,
+        items: [],
+        demo: true
+      });
+    }
+
+    const unavailableItems = [];
+
+    // Check each item's inventory
+    for (const item of items) {
+      if (!item.catalogObjectId) continue;
+
+      try {
+        const inventoryResult = await squareClient.inventoryApi.retrieveInventoryCount(
+          item.catalogObjectId,
+          {
+            locationIds: [process.env.SQUARE_LOCATION_ID]
+          }
+        );
+
+        const counts = inventoryResult.result.counts || [];
+        const availableQty = counts.reduce((sum, c) => sum + parseFloat(c.quantity || 0), 0);
+
+        if (availableQty < (item.quantity || 1)) {
+          unavailableItems.push({
+            id: item.catalogObjectId,
+            name: item.name,
+            requested: item.quantity,
+            available: availableQty
+          });
+        }
+      } catch (invErr) {
+        console.warn(`Inventory check failed for ${item.catalogObjectId}:`, invErr.message);
+        // Assume available if inventory check fails (catalog item may not have inventory tracking)
+      }
+    }
+
+    return res.json({
+      success: true,
+      available: unavailableItems.length === 0,
+      items: unavailableItems
+    });
+  } catch (error) {
+    console.error('Inventory check error:', error);
+    return res.status(500).json({ success: false, error: error.message || 'unknown error' });
+  }
+});
+
+// Sync Catalog - Retrieve menu items from Square
+app.get('/api/square/sync-catalog', async (req, res) => {
+  try {
+    if (DEMO_MODE) {
+      return res.json({
+        success: true,
+        itemCount: 0,
+        items: [],
+        demo: true
+      });
+    }
+
+    // Retrieve all ITEM type catalog objects
+    const catalogResult = await squareClient.catalogApi.listCatalog(
+      undefined, // cursor
+      'ITEM'     // types
+    );
+
+    const items = catalogResult.result.objects || [];
+    const catalogItems = [];
+
+    // Process each catalog item
+    for (const item of items) {
+      const itemData = item.itemData;
+      if (!itemData) continue;
+
+      const variations = itemData.variations || [];
+      const firstVariation = variations[0];
+      const price = firstVariation?.itemVariationData?.priceMoney?.amount || 0;
+
+      catalogItems.push({
+        id: item.id,
+        name: itemData.name,
+        description: itemData.description || '',
+        categoryId: itemData.categoryId,
+        variations: variations.map(v => ({
+          id: v.id,
+          name: v.itemVariationData?.name || '',
+          price: v.itemVariationData?.priceMoney?.amount || 0,
+          priceCurrency: v.itemVariationData?.priceMoney?.currency || 'USD'
+        })),
+        price: price / 100, // Convert cents to dollars
+        available: !itemData.isArchived
+      });
+    }
+
+    return res.json({
+      success: true,
+      itemCount: catalogItems.length,
+      items: catalogItems
+    });
+  } catch (error) {
+    console.error('Catalog sync error:', error);
     return res.status(500).json({ success: false, error: error.message || 'unknown error' });
   }
 });
@@ -315,14 +729,14 @@ app.post('/api/square/webhook', (req, res) => {
         if (payment) {
           const orderId = payment.order_id || payment.orderId || (Array.isArray(payment.order_ids) && payment.order_ids[0]) || (payment.order && payment.order.id) || null;
           const status = (payment.status || '').toUpperCase();
-          const paidStatuses = ['COMPLETED', 'CAPTURED', 'PAID', 'APPROVED'];
+          const paidStatuses = ['COMPLETED', 'CAPTURED', 'APPROVED'];
           if (orderId) {
             if (paidStatuses.includes(status)) {
-              updateOrderStatus(orderId, 'PAID', { paymentId: payment.id, rawStatus: status });
-              console.log(`Order ${orderId} marked as PAID (payment ${payment.id})`);
+              updateOrderStatus(orderId, 'OPEN', { paymentId: payment.id, paymentStatus: status });
+              console.log(`Order ${orderId} marked as OPEN (payment ${payment.id} status: ${status})`);
             } else {
-              updateOrderStatus(orderId, status || 'PENDING', { paymentId: payment.id });
-              console.log(`Order ${orderId} updated with status ${status}`);
+              updateOrderStatus(orderId, 'DRAFT', { paymentId: payment.id, paymentStatus: status });
+              console.log(`Order ${orderId} remains DRAFT (payment status: ${status})`);
             }
           } else {
             console.log('Payment event received but no order ID found in payload');

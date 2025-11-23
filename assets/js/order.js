@@ -945,7 +945,7 @@
     flashCartMessage(`${prod.name} added to cart`);
   }
 
-  // Checkout form: Process payment through Square
+  // Checkout form: Process payment through Square Web Payments SDK
   function wireCheckout(){
     if(!checkoutForm) return;
     checkoutForm.addEventListener('submit', async (e) => {
@@ -990,7 +990,7 @@
         name: customerName,
         phone: customerPhone,
         email: customerEmail,
-        pickupTime: 'ASAP', // Could be made dynamic
+        pickupTime: getPickupTime(), // Get selected pickup time
         note: '' // Could add a notes field
       };
 
@@ -1001,64 +1001,132 @@
       submitButton.textContent = 'Processing...';
 
       try {
-        // Server-side hosted checkout flow (Square Payment Links)
-        // 1) Create an order on the server
-        const createOrderPayload = {
-          items: cartItems,
-          customerName,
-          customerPhone,
-          customerEmail,
-          pickupTime: customerData.pickupTime,
-          note: customerData.note
-        };
-        const createOrderResp = await fetch('/api/square/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(createOrderPayload)
-        });
-        if (!createOrderResp.ok) throw new Error('Failed to create order');
-        const createOrderJson = await createOrderResp.json();
-        const orderId = createOrderJson.orderId || createOrderJson.order_id;
-        if (!orderId) throw new Error('Order creation did not return an orderId');
-
-        // 2) Create a hosted checkout/payment link for that order
-        const redirectUrl = `${location.origin}${location.pathname}?orderId=${encodeURIComponent(orderId)}&payment=complete`;
-        // Convert cartItems to Square line item format
-        const lineItemsForSquare = cartItems.map(i => ({
-          name: i.name,
-          quantity: String(i.quantity || i.qty || 1),
-          basePriceMoney: { amount: Math.round((i.price || 0) * 100), currency: 'USD' }
-        }));
-
-        const checkoutResp = await fetch('/api/square/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId, redirectUrl, lineItems: lineItemsForSquare })
-        });
-        if (!checkoutResp.ok) {
-          const errText = await checkoutResp.text();
-          throw new Error('Failed to create checkout link: ' + errText);
+        // Check if Square Payment integration is available and initialized
+        if (!window.SquarePayment || typeof window.SquarePayment.handleEcosystemCheckout !== 'function') {
+          // Fallback: Square Payment SDK not loaded or not initialized
+          // This means we need to handle payment differently or show an error
+          throw new Error('Payment system is initializing. Please wait a moment and try again.');
         }
-        const checkoutJson = await checkoutResp.json();
-        const paymentLink = checkoutJson.paymentLink || (checkoutJson.raw && checkoutJson.raw.paymentLink && checkoutJson.raw.paymentLink.url);
-        if (!paymentLink) throw new Error('Checkout response did not include a payment link');
 
-        // Clear cart locally then redirect customer to Square-hosted checkout
-        clearCart();
-        checkoutForm.reset();
-        window.location.href = paymentLink;
+        // Use the Square Web Payments SDK integration for complete checkout
+        // This handles: inventory check, customer management, order creation, payment processing
+        const result = await window.SquarePayment.handleEcosystemCheckout(orderData, customerData);
+
+        if (result.success) {
+          // Payment successful!
+          clearCart();
+          checkoutForm.reset();
+          
+          // Show success message with order details
+          const successMessage = `
+            <div class="order-success">
+              <i class='bx bx-check-circle' style="font-size: 3rem; color: var(--first-color);"></i>
+              <h3>Order Placed Successfully!</h3>
+              <p><strong>Order ID:</strong> ${result.orderId}</p>
+              ${result.payment.receiptUrl ? `<p><a href="${result.payment.receiptUrl}" target="_blank" class="button">View Receipt</a></p>` : ''}
+              <p>We'll have your order ready for pickup shortly.</p>
+              <p>Estimated time: 15-25 minutes</p>
+            </div>
+          `;
+          
+          if(orderMessage) {
+            orderMessage.innerHTML = successMessage;
+            orderMessage.classList.add('visible');
+            orderMessage.classList.add('success');
+          }
+
+          // Close cart drawer after a short delay
+          setTimeout(() => {
+            const overlay = document.getElementById('cart-overlay');
+            if (overlay) {
+              overlay.classList.remove('open');
+              overlay.setAttribute('aria-hidden', 'true');
+            }
+          }, 3000);
+
+          // Optional: Start polling for order status updates
+          if (result.orderId) {
+            startOrderStatusPolling(result.orderId);
+          }
+        } else {
+          throw new Error(result.error || 'Payment failed');
+        }
       
       } catch (error) {
         console.error('Checkout error:', error);
         const errorMessage = error.message || 'Payment failed. Please try again or call us to place your order.';
         flashCartMessage(errorMessage);
-        window.SquarePayment?.showPaymentMessage(errorMessage, 'error');
+        if (window.SquarePayment && window.SquarePayment.showPaymentMessage) {
+          window.SquarePayment.showPaymentMessage(errorMessage, 'error');
+        }
       } finally {
         // Re-enable submit button
         submitButton.disabled = false;
         submitButton.textContent = originalText;
       }
     });
+  }
+
+  // Get selected pickup time from timing toggle
+  function getPickupTime() {
+    const toggle = document.getElementById('timing-toggle');
+    if (!toggle) return 'ASAP';
+    
+    const timing = toggle.dataset.timing || 'default';
+    if (timing === 'scheduled' && toggle.dataset.timingValue) {
+      // Validate time format (HH:MM)
+      if (!toggle.dataset.timingValue.match(/^\d{1,2}:\d{2}$/)) {
+        console.warn('Invalid time format, defaulting to ASAP');
+        return 'ASAP';
+      }
+      
+      // Return scheduled time in ISO format
+      const today = new Date();
+      const [hours, minutes] = toggle.dataset.timingValue.split(':');
+      today.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      return today.toISOString();
+    }
+    
+    return 'ASAP';
+  }
+
+  // Poll for order status updates (optional real-time updates)
+  function startOrderStatusPolling(orderId) {
+    if (!orderId) return;
+    
+    let pollCount = 0;
+    const maxPolls = 20; // Poll for up to 10 minutes (20 polls × 30s = 600s)
+    
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      
+      if (pollCount >= maxPolls) {
+        clearInterval(pollInterval);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/square/order-status/${orderId}`);
+        if (!response.ok) {
+          clearInterval(pollInterval);
+          return;
+        }
+        
+        const data = await response.json();
+        if (data.success && data.status) {
+          console.log(`Order ${orderId} status: ${data.status}`);
+          
+          // Update UI if needed based on status
+          // DRAFT -> OPEN -> COMPLETED
+          if (data.status === 'COMPLETED') {
+            clearInterval(pollInterval);
+            // Could show a notification that order is ready
+          }
+        }
+      } catch (err) {
+        console.warn('Order status poll error:', err);
+      }
+    }, 30000); // Poll every 30 seconds
   }
 
   // Clear cart button
