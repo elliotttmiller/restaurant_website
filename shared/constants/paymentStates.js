@@ -1,0 +1,2 @@
+// payment states
+module.exports = {}

@@ -1,0 +1,33 @@
+{
+  "name": "square-demo-server",
+  "version": "0.1.0",
+  "description": "Demo Square API server for local testing (production-pluggable)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "square",
+    "demo",
+    "server",
+    "express"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "*",
+    "cors": "*",
+    "dotenv": "*",
+    "express": "*",
+    "helmet": "*",
+    "morgan": "*",
+  "sqlite3": "*",
+    "square": "*",
+  "uuid": "*"
+  },
+  "devDependencies": {
+    "nodemon": "*"
+  },
+  "type": "commonjs"
+}

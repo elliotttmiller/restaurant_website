@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-"""
-start.py (root wrapper)
-
-Starts the backend server, ensures backend health, optionally starts ngrok, and serves the frontend static site
-from `frontend/public/` so the frontend layout and asset paths remain unchanged.
-
-This mirrors the behavior of `backend/src/app.py` but serves the static site from the new location
-and defaults to starting the backend at `node backend/server.js`.
-"""
-from __future__ import annotations
-
 import http.server
 import socketserver
 import os
@@ -20,12 +8,8 @@ import shutil
 import sys
 
 def load_dotenv_file(path='.env'):
-    """Lightweight .env loader that doesn't require external packages.
-    It sets environment variables for lines like KEY=VALUE, skipping comments.
-    """
+    """Lightweight .env loader using standard library only."""
     try:
-        # Read all lines first so we can support simple ${VAR} expansion
-        parsed = {}
         with open(path, 'r', encoding='utf-8') as f:
             for raw in f:
                 line = raw.strip()
@@ -35,46 +19,30 @@ def load_dotenv_file(path='.env'):
                     key, val = line.split('=', 1)
                     key = key.strip()
                     val = val.strip().strip('"')
-                    parsed[key] = val
-
-        # Perform a simple ${VAR} expansion using already-parsed values and existing env
-        import re
-        var_re = re.compile(r"\$\{([^}]+)\}")
-        def expand(val):
-            if not isinstance(val, str):
-                return val
-            def repl(m):
-                name = m.group(1)
-                return parsed.get(name) or os.environ.get(name) or ''
-            return var_re.sub(repl, val)
-
-        for k, v in parsed.items():
-            final = expand(v)
-            # Only set if not already set in environment
-            if k not in os.environ:
-                os.environ[k] = final
+                    if key not in os.environ:
+                        os.environ[key] = val
     except FileNotFoundError:
         pass
 
 # Load environment variables from .env
 load_dotenv_file()
 
-# Config defaults
-ROOT = os.path.dirname(os.path.abspath(__file__))
-FRONTEND_PUBLIC = os.path.join(ROOT, 'frontend', 'public')
-PORT = int(os.getenv('PORT', os.getenv('STATIC_PORT', 8000)))
-BACKEND_PORT = int(os.getenv('BACKEND_PORT', 3000))
-BACKEND_HEALTH = os.getenv('BACKEND_HEALTH_PATH', '/api/health')
-BACKEND_START_CMD = os.getenv('BACKEND_START_CMD', 'node backend/server.js')
-NGROK_API_URL = os.getenv('NGROK_API_URL', 'http://127.0.0.1:4040/api/tunnels')
+# Config
+PORT = int(os.getenv("PORT", 8000))
+BACKEND_PORT = int(os.getenv("BACKEND_PORT", 3000))
+BACKEND_HEALTH = os.getenv("BACKEND_HEALTH_PATH", f"/api/health")
+BACKEND_START_CMD = os.getenv("BACKEND_START_CMD", "node server.js")
+DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+NGROK_API_URL = "http://127.0.0.1:4040/api/tunnels"
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=FRONTEND_PUBLIC, **kwargs)
+        super().__init__(*args, directory=DIRECTORY, **kwargs)
 
 
 def stream_process_output(proc, name):
+    """Stream subprocess output to stdout/stderr prefixed with the process name."""
     def _stream(stream, out):
         for line in iter(stream.readline, b""):
             try:
@@ -90,13 +58,23 @@ def stream_process_output(proc, name):
     return (t1, t2)
 
 
-def kill_process_on_port(port):
+def kill_process_on_port(port, timeout=5):
+    """Attempt to find and kill any process listening on the given TCP port.
+
+    This tries to be cross-platform: on Windows it parses `netstat -ano` and uses
+    `taskkill`. On Unix-like systems it attempts to use `lsof` or `fuser` if
+    available. This is intentionally aggressive to ensure a clean backend start
+    during development. It only targets the specific port, not all node
+    processes.
+    """
     try:
         port = int(port)
     except Exception:
         return
 
     print(f"Checking for processes listening on port {port}...")
+
+    # Windows path: use netstat -ano
     if os.name == 'nt':
         try:
             out = subprocess.check_output(['netstat', '-ano'], universal_newlines=True)
@@ -107,12 +85,15 @@ def kill_process_on_port(port):
                 if len(parts) >= 5 and parts[0].lower().startswith('tcp'):
                     local = parts[1]
                     pid = parts[-1]
+                    # local may be like 0.0.0.0:3000 or [::]:3000
                     if local.endswith(f':{port}'):
+                        # Filter out invalid or system PIDs like 0 or 4 (SYSTEM)
                         try:
                             pid_int = int(pid)
                         except Exception:
                             continue
                         if pid_int <= 4:
+                            # skip system/idle PIDs
                             continue
                         pids_to_kill.add(str(pid_int))
 
@@ -128,7 +109,7 @@ def kill_process_on_port(port):
             print(f"Failed to inspect netstat output: {e}")
         return
 
-    # Unix-like
+    # Unix-like path: prefer lsof, then fuser
     try:
         lsof = shutil.which('lsof')
         if lsof:
@@ -156,7 +137,7 @@ def kill_process_on_port(port):
 
 
 def wait_for_backend(timeout=15):
-    """Wait for backend health endpoint using only the Python standard library."""
+    """Wait until backend health endpoint responds 200 or raise RuntimeError (standard library only)."""
     import urllib.request
     import urllib.error
 
@@ -175,6 +156,9 @@ def wait_for_backend(timeout=15):
 
 
 def start_ngrok(port):
+    """Start ngrok for the given local port and return (process, public_url).
+    If ngrok binary isn't available, return (None, None).
+    """
     ngrok_bin = shutil.which("ngrok")
     if not ngrok_bin:
         print("ngrok binary not found in PATH; skipping ngrok startup.")
@@ -183,6 +167,7 @@ def start_ngrok(port):
     proc = subprocess.Popen([ngrok_bin, "http", str(port), "--log=stdout"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stream_process_output(proc, "ngrok")
 
+    # Wait for ngrok API to respond
     try:
         import requests
         deadline = time.time() + 10
@@ -216,16 +201,14 @@ def main():
     except Exception as e:
         print(f"Warning: failed to kill existing process on port {BACKEND_PORT}: {e}")
 
-    # Start backend
+    # Start the backend
     print("Starting backend server...")
     backend_cmd = BACKEND_START_CMD.split()
-    # Ensure the backend process uses BACKEND_PORT by setting PORT in its environment
-    env = os.environ.copy()
-    env['PORT'] = str(BACKEND_PORT)
-    backend_proc = subprocess.Popen(backend_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False, env=env)
+    backend_proc = subprocess.Popen(backend_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     stream_process_output(backend_proc, "backend")
 
     try:
+        # Wait for backend to become healthy
         wait_for_backend(timeout=20)
     except Exception as e:
         print(f"Error waiting for backend: {e}")
@@ -236,17 +219,18 @@ def main():
     # Start ngrok tunnelling the static frontend PORT so the public URL serves the site homepage
     ngrok_proc, ngrok_url = start_ngrok(PORT)
 
-    # Start static file server from frontend/public
+    # Start static file server
     try:
         with socketserver.TCPServer(("", PORT), Handler) as httpd:
             print(f"Serving static site at http://localhost:{PORT} (CTRL+C to stop)")
             if ngrok_url:
-                # Point ngrok link to the site root (homepage) instead of a specific page
-                print(f"Public site (ngrok): {ngrok_url}/")
+                    # Point ngrok link to the site root (homepage) instead of a specific page
+                    print(f"ngrok public URL: {ngrok_url}/")
             httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
+        # Cleanup
         try:
             if backend_proc and backend_proc.poll() is None:
                 backend_proc.terminate()
@@ -265,7 +249,7 @@ def main():
                 pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except Exception as e:

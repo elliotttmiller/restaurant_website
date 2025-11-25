@@ -63,18 +63,20 @@ SQUARE_SANDBOX_LOCATION_ID=your_location_id
 
 #### 3. Install Dependencies and Start Server
 
-```bash
-# Navigate to api directory
-cd api
+Install Node dependencies and start the server from the repository root (where `package.json` lives):
 
-# Install Node.js dependencies
+```bash
+# Install Node.js dependencies at the repo root
 npm install
 
-# Start the development server
-npm run dev
+# Start the server (explicitly run server.js)
+node server.js
+
+# For development with auto-reload you can use nodemon if installed:
+# npx nodemon server.js
 ```
 
-The server will start on `http://localhost:3000`
+The server will start on `http://localhost:3000` by default.
 
 #### 4. Configure Client-Side
 
