@@ -45,6 +45,23 @@ class CheckoutService {
         },
       };
 
+      // Sanity-check amounts: ensure amounts are BigInt (SDK expects bigint).
+      try {
+        if (reqBody.order && Array.isArray(reqBody.order.lineItems)) {
+          reqBody.order.lineItems.forEach((li, idx) => {
+            const amt = li && li.basePriceMoney && li.basePriceMoney.amount;
+            logger.info('Line item amount type', { index: idx, value: amt, type: typeof amt });
+            // If amount is not a bigint, fail early with a helpful message
+            if (typeof amt !== 'bigint') {
+              throw new Error(`Line item ${idx} amount must be a BigInt (cents). Got type=${typeof amt} value=${String(amt)}`);
+            }
+          });
+        }
+      } catch (e) {
+        logger.error('Checkout creation validation failed', { error: e && e.message });
+        throw e;
+      }
+
       // Support multiple SDK shapes: older code expected createPaymentLink,
       // newer SDK exposes a paymentLinks client with `create`.
       let sdkResponse;
@@ -86,15 +103,28 @@ class CheckoutService {
   }
 
   formatLineItems(items) {
-    return items.map(item => ({
-      name: item.name || item.title || 'Item',
-      quantity: (item.quantity || 1).toString(),
-      basePriceMoney: {
-        amount: Math.round((item.price || item.amount || 0) * 100),
-        currency: (item.currency || 'USD')
-      },
-      note: item.note || undefined,
-    }));
+    return items.map(item => {
+      // Square SDK expects amount to be a bigint (cents). Convert safely.
+      const rawAmount = Math.round((item.price || item.amount || 0) * 100);
+      let amountVal;
+      try {
+        // Use BigInt for the SDK shape
+        amountVal = BigInt(rawAmount);
+      } catch (e) {
+        // Fallback: if BigInt is not available for some reason, fall back to Number but log a warning
+        amountVal = rawAmount;
+      }
+
+      return {
+        name: item.name || item.title || 'Item',
+        quantity: (item.quantity || 1).toString(),
+        basePriceMoney: {
+          amount: amountVal,
+          currency: (item.currency || 'USD')
+        },
+        note: item.note || undefined,
+      };
+    });
   }
 
   async retrieveCheckout(paymentLinkId) {

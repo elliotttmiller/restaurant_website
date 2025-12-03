@@ -248,6 +248,36 @@ document.addEventListener('DOMContentLoaded', () => {
     tagMenuTitleLines();
 });
 
+// Debug helper: print header icon presence and computed styles when page loads.
+// Useful to diagnose why theme/cart icons appear on some pages but not others.
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const elTheme = document.getElementById('theme-button');
+        const elCart = document.getElementById('cart-button');
+        const info = (el) => {
+            if (!el) return { found: false };
+            const cs = window.getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return {
+                found: true,
+                tag: el.tagName,
+                classes: Array.from(el.classList || []),
+                display: cs.display,
+                visibility: cs.visibility,
+                opacity: cs.opacity,
+                zIndex: cs.zIndex,
+                rect: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+                offsetParent: el.offsetParent ? el.offsetParent.tagName : null,
+                innerHTML: el.innerHTML && el.innerHTML.trim().slice(0,80)
+            };
+        };
+        console.info('[HEADER DEBUG] theme-button:', info(elTheme));
+        console.info('[HEADER DEBUG] cart-button:', info(elCart));
+    } catch (e) {
+        console.warn('Header debug failed', e);
+    }
+});
+
 let _menuTitleResizeTimer = null;
 window.addEventListener('resize', () => {
     clearTimeout(_menuTitleResizeTimer);

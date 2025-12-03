@@ -89,6 +89,12 @@ body.dark-theme{
   /* Light divider for dark theme menus */
   --divider-color: rgba(255,255,255,0.22);
 }
+html body .change-theme,
+html body .cart-button,
+html body #theme-button,
+html body #theme-button:hover {
+  color: var(--text-color);
+}
 
 /*========== Button Dark/Light ==========*/
 .change-theme{
@@ -5365,6 +5371,12 @@ html body .nav__toggle * {
   transition: none !important;
 }
 
+
+/* ======= DEV: Force header icons visible and on-top across pages =======
+   Temporary override to diagnose missing theme/cart icons when served
+   through ngrok or different page classes. Remove or narrow for production. */
+/* Dev overrides removed. If header icons are still misplaced, we'll add a small,
+   targeted rule instead of broad !important overrides. */
 
 /* Final, site-end override to absolutely disable any outline/hover for the
    About page content. Placed at file end so it wins over all previous rules.

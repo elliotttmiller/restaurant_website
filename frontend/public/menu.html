@@ -33,7 +33,7 @@
 
                 <!-- Centered Logo -->
                 <a href="index.html" class="nav__logo-center">
-                    <img src="assets/img/bear-trap-header-light.svg" alt="The Bear Trap" class="nav__logo-img" id="header-logo">
+                    <img src="img/bear-trap-header-light.svg" alt="The Bear Trap" class="nav__logo-img" id="header-logo">
                 </a>
 
                 <!-- Right Nav Items (Desktop) -->
@@ -331,38 +331,41 @@
                     <div class="cart__row cart__total"><strong>Total</strong><strong id="cart-total">$0.00</strong></div>
                 </div>
 
-                <form id="checkout-form" class="checkout-form" novalidate>
-                    <fieldset>
-                        <legend>Contact Information</legend>
-                        <label for="customer-name">Name *</label>
-                        <input id="customer-name" name="name" type="text" required placeholder="Your full name" autocomplete="name">
-
-                        <label for="customer-phone">Phone *</label>
-                        <input id="customer-phone" name="phone" type="tel" required placeholder="(320) 555-1212" autocomplete="tel">
-
-                        <label for="customer-email">Email (Optional)</label>
-                        <input id="customer-email" name="email" type="email" placeholder="your@email.com" autocomplete="email">
-                    </fieldset>
-
-                    <fieldset>
-                        <legend>Payment Information</legend>
-                        <!-- Square Card Payment Form -->
-                        <div id="card-container"></div>
-                        <div id="payment-message" class="payment-message" role="alert" aria-live="assertive"></div>
-                    </fieldset>
-
-                    <button id="place-order" class="button button--primary" type="submit">Complete Order &amp; Pay</button>
-                </form>
+                <div id="cart-actions">
+                    <button id="place-order" class="button button--primary" type="button">Checkout</button>
+                </div>
 
                 <div id="order-message" class="order-message" role="status" aria-live="polite"></div>
             </div>
         </div>
-
-        <!--========== SQUARE WEB PAYMENTS SDK ==========-->
-        <script src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
-
+        
         <!--========== MAIN JS ==========-->
     <script src="js/main.js"></script>
     <script src="js/order.js"></script>
+
+    <!-- Shared checkout modal (copied from order page) -->
+    <div class="checkout-modal" id="checkout-modal" aria-hidden="true">
+      <div class="checkout-modal__content">
+        <button class="checkout-modal__close" id="checkout-modal-close" aria-label="Close checkout modal">&times;</button>
+        <h2>Checkout</h2>
+        <div class="modal-timing" style="text-align:center; margin-bottom:0.75rem;">
+            <button class="timing-toggle" id="timing-toggle" aria-haspopup="true" aria-expanded="false">ASAP · Pickup in 15 - 25 min ▾</button>
+        </div>
+        <form class="checkout-form" id="checkout-form">
+          <label for="checkout-name">Name *</label>
+          <input type="text" id="checkout-name" name="name" required>
+
+          <label for="checkout-phone">Phone *</label>
+          <input type="tel" id="checkout-phone" name="phone" required>
+
+          <label for="checkout-email">Email (Optional)</label>
+          <input type="email" id="checkout-email" name="email">
+
+          <div id="payment-message" class="payment-message" role="alert" aria-live="assertive"></div>
+
+          <button type="submit" class="button button--primary checkout-form__submit">Complete Order</button>
+        </form>
+      </div>
+    </div>
     </body>
 </html>

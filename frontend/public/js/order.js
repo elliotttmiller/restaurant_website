@@ -164,6 +164,16 @@
 
   let cart = loadCart();
 
+  // Determine API base for backend calls. When serving the static site locally via
+  // the Python static server (start.py), the frontend origin will be the static
+  // server (e.g. http://localhost:8000) while the backend runs on BACKEND_PORT
+  // (default 3000). Detect localhost and point API calls at that backend port so
+  // requests like POST /square/checkout/create go to the Node server instead of
+  // the static server (which returns 501 for POST).
+  const _isLocalhost = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
+  const _backendPort = (typeof window !== 'undefined' && window.__BACKEND_PORT) ? window.__BACKEND_PORT : 3000;
+  const apiBase = _isLocalhost ? `${window.location.protocol}//${window.location.hostname}:${_backendPort}` : '';
+
   // Render products grouped into sections (mirrors menu layout)
   function renderProducts(){
     if(!productsList) return;
@@ -919,6 +929,26 @@
     flashCartMessage(`${prod.name} added to cart`);
   }
 
+  // Helper to show a small spinner and disable a button (global)
+  function showButtonLoading(btn, labelText = 'Processing...'){
+    if(!btn) return;
+    try{
+      if(!btn.dataset.origHtml) btn.dataset.origHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.setAttribute('aria-busy','true');
+      btn.innerHTML = '<span class="btn-spinner" aria-hidden="true"></span>' + labelText;
+    }catch(e){ /* ignore */ }
+  }
+
+  function hideButtonLoading(btn){
+    if(!btn) return;
+    try{
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      if(btn.dataset.origHtml){ btn.innerHTML = btn.dataset.origHtml; delete btn.dataset.origHtml; }
+    }catch(e){ /* ignore */ }
+  }
+
   // Checkout form: Use Square hosted checkout links (server creates payment link)
   // When the user submits the checkout form we POST to the backend to create
   // a Square hosted checkout link and then redirect the browser to that URL.
@@ -1001,14 +1031,14 @@
         note: ''
       };
 
-      const submitButton = (checkoutForm && checkoutForm.querySelector('button[type="submit"]')) || document.getElementById('place-order');
-      const originalText = submitButton ? submitButton.textContent : '';
-      if(submitButton){ submitButton.disabled = true; submitButton.textContent = 'Processing...'; }
+  const submitButton = (checkoutForm && checkoutForm.querySelector('button[type="submit"]')) || document.getElementById('place-order');
+  // show spinner and disable
+  if(submitButton) showButtonLoading(submitButton, 'Processing...');
 
       try {
         // Call backend to create Square hosted checkout link
         const redirectUrl = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + '/order-confirmation.html';
-        const resp = await fetch('/square/checkout/create', {
+        const resp = await fetch(`${apiBase}/square/checkout/create`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ order: orderPayload, redirectUrl })
@@ -1032,7 +1062,7 @@
         const errorMessage = error.message || 'Checkout failed. Please try again or call to place your order.';
         flashCartMessage(errorMessage);
       } finally {
-        if(submitButton){ submitButton.disabled = false; submitButton.textContent = originalText; }
+        if(submitButton) hideButtonLoading(submitButton);
       }
     });
   }
@@ -1111,12 +1141,88 @@
 
   // Checkout Modal Behavior
   if (checkoutButton && checkoutModal && checkoutModalClose) {
-    // Open modal on button click
-    checkoutButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      checkoutModal.setAttribute('aria-hidden', 'false');
-      checkoutModal.classList.add('show-modal');
-    });
+    
+    // Function to initiate hosted Square checkout. If required customer
+    // contact fields (name/phone) are missing, fall back to showing the
+    // in-page checkout modal so user can enter them. Otherwise POST to
+    // the backend to create a Square hosted checkout link and redirect.
+    async function initiateHostedCheckout(e){
+      if(e && typeof e.preventDefault === 'function') e.preventDefault();
+
+      const totals = computeTotals();
+      if(totals.subtotal <= 0){
+        flashCartMessage('Add items to your cart before placing an order.');
+        return;
+      }
+
+      // Try to read customer info from existing fields (may be present on page)
+      const customerName = (document.getElementById('checkout-name') && document.getElementById('checkout-name').value.trim()) || (document.getElementById('customer-name') && document.getElementById('customer-name').value.trim()) || '';
+      const customerPhone = (document.getElementById('checkout-phone') && document.getElementById('checkout-phone').value.trim()) || (document.getElementById('customer-phone') && document.getElementById('customer-phone').value.trim()) || '';
+
+      // If required fields aren't present, open the modal to collect them
+      if(!customerName || !customerPhone){
+        checkoutModal.setAttribute('aria-hidden', 'false');
+        checkoutModal.classList.add('show-modal');
+        // focus management handled by existing modal code
+        return;
+      }
+
+      // Build cart items payload (same shape used by the form submit handler)
+      const cartItems = Object.values(cart).map(item => ({
+        name: item.name,
+        quantity: item.qty,
+        price: item.price,
+        customizations: item.customizations || '',
+        totalPrice: item.price * item.qty
+      }));
+
+      const orderPayload = {
+        items: cartItems,
+        subtotal: totals.subtotal,
+        tax: totals.tax,
+        total: totals.total,
+        customerEmail: (document.getElementById('checkout-email') && document.getElementById('checkout-email').value.trim()) || '',
+        customerPhone: customerPhone,
+        pickupTime: getPickupTime(),
+        note: ''
+      };
+
+      try {
+        const redirectUrl = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + '/order-confirmation.html';
+        // show loading on the triggering element if available
+        const triggerBtn = (e && e.currentTarget) || checkoutButton || document.getElementById('place-order');
+        if(triggerBtn) showButtonLoading(triggerBtn, 'Processing...');
+
+        const resp = await fetch(`${apiBase}/square/checkout/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: orderPayload, redirectUrl })
+        });
+
+        if(!resp.ok){
+          const txt = await resp.text().catch(()=>null);
+          throw new Error(txt || 'Failed to create checkout session');
+        }
+
+        const data = await resp.json().catch(()=>null);
+        if(!data || !data.success || !data.checkoutUrl){
+          throw new Error((data && (data.error || data.message)) || 'Failed to create checkout link');
+        }
+
+        // Redirect browser to Square-hosted checkout
+        window.location.href = data.checkoutUrl;
+
+      } catch(err){
+        console.error('Hosted checkout error:', err);
+        flashCartMessage(err && err.message ? err.message : 'Checkout failed. Please try again.');
+      } finally {
+        const triggerBtn = (e && e.currentTarget) || checkoutButton || document.getElementById('place-order');
+        if(triggerBtn) hideButtonLoading(triggerBtn);
+      }
+    }
+
+    // Wire header checkout to initiate hosted checkout (or show modal if needed)
+    checkoutButton.addEventListener('click', initiateHostedCheckout);
 
     // Close modal on close button click
     checkoutModalClose.addEventListener('click', () => {
@@ -1143,83 +1249,20 @@
     wireTimingToggle();
     wireCategoryTabs();
 
-    // Open checkout modal when the cart 'Checkout' button is clicked
+    // When the cart 'Checkout' button is clicked, attempt hosted checkout.
+    // If required customer details are missing the modal will be shown by
+    // initiateHostedCheckout so the user can enter them.
     if (placeOrderBtn && checkoutModal) {
       placeOrderBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
         // Close cart overlay if open
         const overlay = document.getElementById('cart-overlay');
         if (overlay && overlay.classList.contains('open')) {
           overlay.classList.remove('open');
           overlay.setAttribute('aria-hidden', 'true');
         }
-
-        // Remember previously focused element for accessibility
-        const previousFocus = document.activeElement;
-
-        // Show checkout modal with smooth animation
-        document.body.classList.add('modal-open');
-        checkoutModal.setAttribute('aria-hidden', 'false');
-        checkoutModal.classList.add('show-modal');
-
-        // Using hosted Square checkout links — no in-page card needs attaching here.
-
-        // focus management: focus first focusable inside modal
-        const focusableSelector = 'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
-        const focusable = Array.from(checkoutModal.querySelectorAll(focusableSelector)).filter(el => el.offsetParent !== null);
-        const firstInput = focusable.length ? focusable[0] : null;
-        if (firstInput) setTimeout(() => firstInput.focus(), 60);
-
-        // trap focus inside modal
-        function handleKeyDown(e){
-          if (e.key === 'Escape') {
-            e.preventDefault();
-            closeModal();
-            return;
-          }
-          if (e.key === 'Tab') {
-            const focusableElems = focusable;
-            if (!focusableElems.length) return;
-            const currentIndex = focusableElems.indexOf(document.activeElement);
-            if (e.shiftKey) {
-              // Shift + Tab
-              if (currentIndex === 0 || document.activeElement === checkoutModal) {
-                e.preventDefault();
-                focusableElems[focusableElems.length - 1].focus();
-              }
-            } else {
-              // Tab
-              if (currentIndex === focusableElems.length - 1) {
-                e.preventDefault();
-                focusableElems[0].focus();
-              }
-            }
-          }
-        }
-
-        // Close modal helper
-        function closeModal(){
-          checkoutModal.setAttribute('aria-hidden', 'true');
-          checkoutModal.classList.remove('show-modal');
-          document.body.classList.remove('modal-open');
-          document.removeEventListener('keydown', handleKeyDown);
-          // return focus
-          try{ if(previousFocus && typeof previousFocus.focus === 'function') previousFocus.focus(); }catch(e){}
-        }
-
-        // attach keydown listener for trap and escape
-        document.addEventListener('keydown', handleKeyDown);
-
-        // If modal has its own close button, ensure it closes and cleans up
-        const modalClose = checkoutModal.querySelector('.checkout-modal__close');
-        if (modalClose) {
-          modalClose.addEventListener('click', (ev) => { ev.preventDefault(); closeModal(); });
-        }
-
-        // backdrop click already wired earlier to close modal; ensure it removes body class as well
-        checkoutModal.addEventListener('click', function backdropHandler(event){
-          if (event.target === checkoutModal) { closeModal(); checkoutModal.removeEventListener('click', backdropHandler); }
-        });
+        // Delegate to the hosted checkout initiator (it will open modal if needed)
+        try { await initiateHostedCheckout(e); } catch(err) { /* errors handled inside */ }
       });
     }
 

@@ -233,16 +233,19 @@ def main():
         backend_proc.wait()
         raise
 
-    # Start ngrok tunnelling the static frontend PORT so the public URL serves the site homepage
-    ngrok_proc, ngrok_url = start_ngrok(PORT)
+    # Start ngrok tunnelling the backend port so the public URL maps to the Node backend
+    # This makes it simple to test webhooks and API calls from Square (they need a public HTTPS URL
+    # that points to your backend). The static site is still served locally at PORT.
+    ngrok_proc, ngrok_url = start_ngrok(BACKEND_PORT)
 
     # Start static file server from frontend/public
     try:
         with socketserver.TCPServer(("", PORT), Handler) as httpd:
             print(f"Serving static site at http://localhost:{PORT} (CTRL+C to stop)")
             if ngrok_url:
-                # Point ngrok link to the site root (homepage) instead of a specific page
-                print(f"Public site (ngrok): {ngrok_url}/")
+                # ngrok public URL maps to the backend. Use this for webhook configuration
+                # (e.g. https://<ngrok>/square/webhooks) or for testing API calls from remote services.
+                print(f"Public backend (ngrok) -> {ngrok_url}/  (for webhooks and API testing)")
             httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down...")

@@ -1,0 +1,53 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker authentication to GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Build and push image to GCR
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+        run: |
+          IMAGE=gcr.io/$PROJECT_ID/$SERVICE:${{ github.sha }}
+          docker build -t $IMAGE -f docker/Dockerfile .
+          docker push $IMAGE
+
+      - name: Deploy to Cloud Run
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          SERVICE: ${{ secrets.CLOUD_RUN_SERVICE }}
+          REGION: ${{ secrets.CLOUD_RUN_REGION }}
+        run: |
+          IMAGE=gcr.io/$PROJECT_ID/$SERVICE:${{ github.sha }}
+          gcloud run deploy $SERVICE \
+            --image $IMAGE \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --port 8080
+
+      - name: Post-deploy notes
+        run: |
+          echo "Cloud Run service deployed: ${{ secrets.CLOUD_RUN_SERVICE }}"
+          echo "If you are using Cloudflare in front of the service, point api subdomain to the Cloud Run HTTPS URL or configure a Cloudflare Tunnel."
