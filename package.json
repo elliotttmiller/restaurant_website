@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build step required'"
+    "build": "rmdir /S /Q dist && mkdir dist && xcopy public dist /E /I /Y"
   },
   "keywords": [
     "square",
@@ -23,9 +23,10 @@
     "express": "*",
     "helmet": "*",
     "morgan": "*",
-  "sqlite3": "*",
+    "sqlite3": "*",
     "square": "*",
-  "uuid": "*"
+    "uuid": "*",
+    "vite": "^7.2.6"
   },
   "devDependencies": {
     "nodemon": "*"

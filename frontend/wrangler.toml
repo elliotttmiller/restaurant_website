@@ -1,0 +1,12 @@
+name = "bear-trap"
+main = "dist/index.html"
+compatibility_date = "2025-12-03"
+
+[build]
+command = "npm run build"
+directory = "dist"
+
+[vars]
+# Add your environment variables here
+# Example:
+# VARIABLE_NAME = "value"

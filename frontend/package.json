@@ -2,6 +2,10 @@
   "name": "frontend",
   "private": true,
   "scripts": {
-    "build": "echo 'No build step required'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npx wrangler deploy",
+    "deploy:preview": "npx wrangler versions upload"
   }
 }
