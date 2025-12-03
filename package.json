@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "rmdir /S /Q dist && mkdir dist && xcopy public dist /E /I /Y"
+    "build": "rm -rf dist && mkdir dist && cp -r public/* dist/"
   },
   "keywords": [
     "square",
