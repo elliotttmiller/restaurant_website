@@ -1,4 +1,7 @@
 {
   "name": "frontend",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build step required'"
+  }
 }
