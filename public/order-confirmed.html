@@ -1,0 +1,62 @@
+<!-- order-confirmed.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Confirmed - Your Restaurant</title>
+    <script>
+        // Get order ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        
+        // Fetch order details
+        async function loadOrderDetails() {
+            try {
+                const response = await fetch(`/api/order/${orderId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('orderId').textContent = data.order.id;
+                    document.getElementById('customerName').textContent = data.order.customerName;
+                    document.getElementById('orderTotal').textContent = `$${data.order.total}`;
+                    document.getElementById('readyTime').textContent = 
+                        new Date(data.order.estimatedReady).toLocaleTimeString();
+                    
+                    // Update status
+                    updateOrderStatus(data.order.status);
+                }
+            } catch (error) {
+                console.error('Failed to load order details:', error);
+            }
+        }
+        
+        function updateOrderStatus(status) {
+            const statusElement = document.getElementById('orderStatus');
+            statusElement.textContent = status;
+            statusElement.className = `status-${status.toLowerCase()}`;
+        }
+        
+        // Check status periodically
+        setInterval(() => {
+            loadOrderDetails();
+        }, 30000); // Every 30 seconds
+        
+        window.addEventListener('load', loadOrderDetails);
+    </script>
+</head>
+<body>
+    <div class="order-confirmation">
+        <h1>🎉 Order Confirmed!</h1>
+        <div class="order-details">
+            <p><strong>Order ID:</strong> <span id="orderId"></span></p>
+            <p><strong>Status:</strong> <span id="orderStatus" class="status-pending">PENDING</span></p>
+            <p><strong>Estimated Ready:</strong> <span id="readyTime"></span></p>
+            <p><strong>Total:</strong> $<span id="orderTotal"></span></p>
+        </div>
+        <div class="next-steps">
+            <h2>What's Next?</h2>
+            <p>We'll notify you when your order is ready for pickup.</p>
+            <p>You'll receive a receipt via email shortly.</p>
+        </div>
+    </div>
+</body>
+</html>

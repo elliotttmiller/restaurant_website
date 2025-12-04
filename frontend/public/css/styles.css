@@ -3356,7 +3356,9 @@ body.dark-theme .services__img {
 
   .services__container,
   .menu__container{
-    margin-top: var(--mb-6);
+    /* Reduced top spacing so the Services section sits closer to the Specials
+       on desktop/tablet. Changed from --mb-6 (3rem) to --mb-4 (2rem). */
+    margin-top: var(--mb-4);
   }
 
   .menu__container{
@@ -5441,5 +5443,17 @@ body .about-page__content .about-bullets li{
    the closing line so they visually separate more. */
 body .about-page__content .about-bullets{ margin-bottom: 2rem !important; }
 body .about-page__content .closing{ margin-top: 3rem !important; }
+
+/* ---------- Specials / Services spacing tweaks (safety overrides) ---------- */
+/* Ensure services sits in normal flow and reduce chance of overlap on very small screens. */
+.services{ position: relative; }
+
+@media screen and (max-width: 480px){
+  /* Small devices: reduce top gap and ensure services appear after specials
+     without overlay by forcing normal stacking and a small clear margin. */
+  .services{ z-index: 2; margin-top: 1rem; padding-top: 0.5rem; }
+  .home__specials-wrapper{ margin-bottom: 2.25rem; }
+}
+
 
 
